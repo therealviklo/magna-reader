@@ -1,0 +1,1 @@
+@vmake clang++ magna-reader.cpp -o mr.exe -O2 -std=c++20 -Wall -Wextra
