@@ -10,7 +10,7 @@ int WINAPI wWinMain(
 {
 	try
 	{
-
+		
 	}
 	catch (const std::exception& e)
 	{

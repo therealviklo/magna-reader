@@ -3,7 +3,16 @@
 #include <utility>
 #include <string>
 #include <sstream>
+#include <type_traits>
+#include <memory>
+#include <concepts>
 #include "win.h"
+
+#define EXCEPT(name) \
+	struct name final : public std::runtime_error \
+	{ \
+		name(const char* msg) : std::runtime_error(msg) {} \
+	};
 
 template <typename T>
 std::string toString(T t)
@@ -70,3 +79,15 @@ inline std::wstring stringToWstring(const std::string& s)
 	)) throw std::runtime_error("Failed to convert UTF-8 string to UTF-16 string");
 	return ret;
 }
+
+template <typename T, auto Closer>
+struct UHandleHelper
+{
+	constexpr inline void operator()(T ptr) const noexcept(noexcept(Closer(ptr)))
+	{
+		if (ptr) Closer(ptr);
+	}
+};
+template <typename T, auto Closer>
+	requires std::is_pointer_v<T>
+using UHandle = std::unique_ptr<std::remove_pointer_t<T>, UHandleHelper<T, Closer>>;
