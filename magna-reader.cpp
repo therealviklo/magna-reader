@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include "utils.h"
+#include "gui.h"
 
 int WINAPI wWinMain(
 	HINSTANCE /*hInstance*/,
@@ -10,7 +11,8 @@ int WINAPI wWinMain(
 {
 	try
 	{
-		
+		MainWindow mw;
+		while (mw) mw.update();
 	}
 	catch (const std::exception& e)
 	{
