@@ -11,4 +11,6 @@ public:
 			WS_EX_OVERLAPPEDWINDOW,
 			L"Magna Reader"
 		  ) {}
+	
+	LRESULT wndProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
 };
