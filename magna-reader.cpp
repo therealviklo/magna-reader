@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "gui.h"
 #include "lippincott.h"
+#include "d2d.h"
 
 std::vector<std::wstring> getCmdLineArgs(const wchar_t* cmdLine)
 {
