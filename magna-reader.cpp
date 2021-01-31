@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <vector>
+#include <sstream>
 #include "utils.h"
 #include "gui.h"
 
@@ -25,9 +26,60 @@ int WINAPI wWinMain(
 {
 	try
 	{
-		const auto args = getCmdLineArgs(pCmdLine);
-		MainWindow mw;
+		const auto args = std::wstring(pCmdLine).empty() ? std::vector<std::wstring>{} : getCmdLineArgs(pCmdLine);
+		MainWindow mw(args);
 		while (mw) mw.update();
+	}
+	catch (const NoResWinError& e)
+	{
+		try
+		{
+			MessageBoxW(
+				nullptr,
+				stringToWstring(e.what()).c_str(),
+				L"Error",
+				MB_ICONERROR
+			);
+			return EXIT_FAILURE;
+		}
+		catch (...)
+		{
+			MessageBoxW(
+				nullptr,
+				L"Exception thrown when trying to display error message",
+				L"Error",
+				MB_ICONERROR
+			);
+			return EXIT_FAILURE;	
+		}
+	}
+	catch (const WinError& e)
+	{
+		try
+		{
+			std::wostringstream ss;
+			ss << e.what()
+			   << " (Error code: 0x"
+			   << std::hex << e.hr
+			   << ")";
+			MessageBoxW(
+				nullptr,
+				ss.str().c_str(),
+				L"Error",
+				MB_ICONERROR
+			);
+			return EXIT_FAILURE;
+		}
+		catch (...)
+		{
+			MessageBoxW(
+				nullptr,
+				L"Exception thrown when trying to display error message",
+				L"Error",
+				MB_ICONERROR
+			);
+			return EXIT_FAILURE;	
+		}
 	}
 	catch (const std::exception& e)
 	{
