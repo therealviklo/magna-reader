@@ -2,3 +2,8 @@
 *.exe
 *.o
 *.obj
+
+*.bmp
+*.png
+*.jpg
+*.gif

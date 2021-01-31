@@ -3,6 +3,7 @@
 #include <sstream>
 #include "utils.h"
 #include "gui.h"
+#include "lippincott.h"
 
 std::vector<std::wstring> getCmdLineArgs(const wchar_t* cmdLine)
 {
@@ -30,88 +31,9 @@ int WINAPI wWinMain(
 		MainWindow mw(args);
 		while (mw) mw.update();
 	}
-	catch (const NoResWinError& e)
-	{
-		try
-		{
-			MessageBoxW(
-				nullptr,
-				stringToWstring(e.what()).c_str(),
-				L"Error",
-				MB_ICONERROR
-			);
-			return EXIT_FAILURE;
-		}
-		catch (...)
-		{
-			MessageBoxW(
-				nullptr,
-				L"Exception thrown when trying to display error message",
-				L"Error",
-				MB_ICONERROR
-			);
-			return EXIT_FAILURE;	
-		}
-	}
-	catch (const WinError& e)
-	{
-		try
-		{
-			std::wostringstream ss;
-			ss << e.what()
-			   << " (Error code: 0x"
-			   << std::hex << e.hr
-			   << ")";
-			MessageBoxW(
-				nullptr,
-				ss.str().c_str(),
-				L"Error",
-				MB_ICONERROR
-			);
-			return EXIT_FAILURE;
-		}
-		catch (...)
-		{
-			MessageBoxW(
-				nullptr,
-				L"Exception thrown when trying to display error message",
-				L"Error",
-				MB_ICONERROR
-			);
-			return EXIT_FAILURE;	
-		}
-	}
-	catch (const std::exception& e)
-	{
-		try
-		{
-			MessageBoxW(
-				nullptr,
-				stringToWstring(e.what()).c_str(),
-				L"Error",
-				MB_ICONERROR
-			);
-			return EXIT_FAILURE;
-		}
-		catch (...)
-		{
-			MessageBoxW(
-				nullptr,
-				L"Exception thrown when trying to display error message",
-				L"Error",
-				MB_ICONERROR
-			);
-			return EXIT_FAILURE;	
-		}
-	}
 	catch (...)
 	{
-		MessageBoxW(
-			nullptr,
-			L"Unknown error",
-			L"Error",
-			MB_ICONERROR
-		);
+		lippincott();
 		return EXIT_FAILURE;
 	}
 	return EXIT_SUCCESS;
