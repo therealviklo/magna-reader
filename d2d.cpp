@@ -10,28 +10,6 @@ D2DFactory::D2DFactory()
 	))) throw WinError("Failed to create Direct2D factory", hr);
 }
 
-ComPtr<IWICBitmapFrameDecode> WICFactory::loadBitmap(const wchar_t* filename)
-{
-	HRESULT hr;
-
-	ComPtr<IWICBitmapDecoder> decoder;
-	if (FAILED(hr = factory->CreateDecoderFromFilename(
-		filename,
-		nullptr,
-		GENERIC_READ,
-		WICDecodeMetadataCacheOnDemand,
-		&decoder
-	))) throw WinError("Failed to create WIC image decoder", hr);
-
-	ComPtr<IWICBitmapFrameDecode> bmpDcd;
-	if (FAILED(hr = decoder->GetFrame(
-		0,
-		&bmpDcd
-	))) throw WinError("Failed to decode image", hr);
-
-	return bmpDcd;
-}
-
 WICFactory::WICFactory()
 {
 	HRESULT hr;
@@ -73,23 +51,33 @@ RenderTarget::RenderTarget(HWND hWnd, D2DFactory& d2dfac)
 	createRenderTarget(d2dfac);
 }
 
-ComPtr<ID2D1Bitmap> RenderTarget::loadBitmap(WICFactory& wicfac, const wchar_t* filename)
+Bitmap::Bitmap(const wchar_t* filename, WICFactory& wicfac, RenderTarget& rt)
 {
 	HRESULT hr;
 
-	const auto bmpDcd = wicfac.loadBitmap(filename);
+	ComPtr<IWICBitmapDecoder> decoder;
+	if (FAILED(hr = wicfac.factory->CreateDecoderFromFilename(
+		filename,
+		nullptr,
+		GENERIC_READ,
+		WICDecodeMetadataCacheOnDemand,
+		&decoder
+	))) throw WinError("Failed to create WIC image decoder", hr);
+
+	ComPtr<IWICBitmapFrameDecode> bmpDcd;
+	if (FAILED(hr = decoder->GetFrame(
+		0,
+		&bmpDcd
+	))) throw WinError("Failed to decode image", hr);
 
 	ComPtr<IWICBitmapSource> bmpSrc;
 	if (FAILED(hr = bmpSrc->QueryInterface(
 		__uuidof(IWICBitmapSource),
 		&bmpSrc
 	))) throw WinError("Failed to query WIC bitmap source interface", hr);
-
-	ComPtr<ID2D1Bitmap> bmp;
-	if (FAILED(rt->CreateBitmapFromWicBitmap(
+	
+	if (FAILED(rt.rt->CreateBitmapFromWicBitmap(
 		bmpSrc.Get(),
 		&bmp
 	))) throw WinError("Failed to create Direct2D bitmap", hr);
-
-	return bmp;
 }

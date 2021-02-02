@@ -37,17 +37,16 @@ public:
 
 class WICFactory
 {
-	friend class RenderTarget;
+	friend class Bitmap;
 private:
 	ComPtr<IWICImagingFactory> factory;
-
-	ComPtr<IWICBitmapFrameDecode> loadBitmap(const wchar_t* filename);
 public:
 	WICFactory();
 };
 
 class RenderTarget
 {
+	friend class Bitmap;
 private:
 	HWND hWnd;
 	ComPtr<ID2D1HwndRenderTarget> rt;
@@ -73,6 +72,12 @@ public:
 	{
 		rt->Resize(D2D1::SizeU(w, h));
 	}
+};
 
-	ComPtr<ID2D1Bitmap> loadBitmap(WICFactory& wicfac, const wchar_t* filename);
+class Bitmap
+{
+private:
+	ComPtr<ID2D1Bitmap> bmp;
+public:
+	Bitmap(const wchar_t* filename, WICFactory& wicfac, RenderTarget& rt);
 };
