@@ -2,6 +2,7 @@
 #include "win.h"
 #include <d2d1.h>
 #include <wrl.h>
+#include <wincodec.h>
 #include "winerror.h"
 
 using Microsoft::WRL::ComPtr;
@@ -34,6 +35,17 @@ public:
 	D2DFactory();
 };
 
+class WICFactory
+{
+	friend class RenderTarget;
+private:
+	ComPtr<IWICImagingFactory> factory;
+
+	ComPtr<IWICBitmapFrameDecode> loadBitmap(const wchar_t* filename);
+public:
+	WICFactory();
+};
+
 class RenderTarget
 {
 private:
@@ -61,4 +73,6 @@ public:
 	{
 		rt->Resize(D2D1::SizeU(w, h));
 	}
+
+	ComPtr<ID2D1Bitmap> loadBitmap(WICFactory& wicfac, const wchar_t* filename);
 };
