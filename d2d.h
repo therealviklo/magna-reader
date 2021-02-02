@@ -49,10 +49,12 @@ public:
 	{
 		HRESULT hr;
 		if (FAILED(hr = rt->EndDraw()))
+		{
 			if (hr == D2DERR_RECREATE_TARGET)
 				createRenderTarget(d2dfac);
 			else
 				throw WinError("Direct2D drawing error", hr);
+		}
 	}
 
 	constexpr void resize(unsigned int w, unsigned int h)
