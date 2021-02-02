@@ -45,6 +45,17 @@ void RenderTarget::createRenderTarget(D2DFactory& d2dfac)
 	rt->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_ALIASED);
 }
 
+void RenderTarget::drawBitmap(const Bitmap& bitmap, float x, float y, float w, float h, float alpha) noexcept
+{
+	rt->DrawBitmap(
+		bitmap.bmp.Get(),
+		D2D1::RectF(x, y, w, h),
+		alpha,
+		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+		nullptr
+	);
+}
+
 RenderTarget::RenderTarget(HWND hWnd, D2DFactory& d2dfac)
 	: hWnd(hWnd)
 {
@@ -71,12 +82,12 @@ Bitmap::Bitmap(const wchar_t* filename, WICFactory& wicfac, RenderTarget& rt)
 	))) throw WinError("Failed to decode image", hr);
 
 	ComPtr<IWICBitmapSource> bmpSrc;
-	if (FAILED(hr = bmpSrc->QueryInterface(
+	if (FAILED(hr = bmpDcd->QueryInterface(
 		__uuidof(IWICBitmapSource),
 		&bmpSrc
 	))) throw WinError("Failed to query WIC bitmap source interface", hr);
 	
-	if (FAILED(rt.rt->CreateBitmapFromWicBitmap(
+	if (FAILED(hr = rt.rt->CreateBitmapFromWicBitmap(
 		bmpSrc.Get(),
 		&bmp
 	))) throw WinError("Failed to create Direct2D bitmap", hr);

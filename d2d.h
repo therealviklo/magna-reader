@@ -44,6 +44,8 @@ public:
 	WICFactory();
 };
 
+class Bitmap;
+
 class RenderTarget
 {
 	friend class Bitmap;
@@ -72,10 +74,13 @@ public:
 	{
 		rt->Resize(D2D1::SizeU(w, h));
 	}
+
+	void drawBitmap(const Bitmap& bitmap, float x, float y, float w, float h, float alpha = 1.0f) noexcept;
 };
 
 class Bitmap
 {
+	friend class RenderTarget;
 private:
 	ComPtr<ID2D1Bitmap> bmp;
 public:
