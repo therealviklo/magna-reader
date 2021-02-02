@@ -28,6 +28,8 @@ int WINAPI wWinMain(
 {
 	try
 	{
+		COMHandler ch;
+
 		const auto args = std::wstring(pCmdLine).empty() ? std::vector<std::wstring>{} : getCmdLineArgs(pCmdLine);
 		MainWindow mw(args);
 		while (mw) mw.update();

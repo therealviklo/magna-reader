@@ -10,14 +10,14 @@ D2DFactory::D2DFactory()
 	))) throw WinError("Failed to create Direct2D factory", hr);
 }
 
-RenderTarget::RenderTarget(HWND hWnd, ID2D1Factory* d2dfac)
+void RenderTarget::createRenderTarget(D2DFactory& d2dfac)
 {
 	HRESULT hr;
 
 	RECT rc;
 	if (!GetClientRect(hWnd, &rc)) throw WinError("Failed to get window client area");
 
-	if (FAILED(hr = d2dfac->CreateHwndRenderTarget(
+	if (FAILED(hr = d2dfac.factory->CreateHwndRenderTarget(
 		D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_SOFTWARE),
 		D2D1::HwndRenderTargetProperties(
 			hWnd,
@@ -30,4 +30,10 @@ RenderTarget::RenderTarget(HWND hWnd, ID2D1Factory* d2dfac)
 
 	rt->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 	rt->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_ALIASED);
+}
+
+RenderTarget::RenderTarget(HWND hWnd, D2DFactory& d2dfac)
+	: hWnd(hWnd)
+{
+	createRenderTarget(d2dfac);
 }
