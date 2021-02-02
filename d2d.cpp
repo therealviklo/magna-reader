@@ -91,4 +91,8 @@ Bitmap::Bitmap(const wchar_t* filename, WICFactory& wicfac, RenderTarget& rt)
 		bmpSrc.Get(),
 		&bmp
 	))) throw WinError("Failed to create Direct2D bitmap", hr);
+
+	const auto size = bmp->GetPixelSize();
+	w = size.width;
+	h = size.height;
 }

@@ -83,6 +83,11 @@ class Bitmap
 	friend class RenderTarget;
 private:
 	ComPtr<ID2D1Bitmap> bmp;
+	unsigned w;
+	unsigned h;
 public:
 	Bitmap(const wchar_t* filename, WICFactory& wicfac, RenderTarget& rt);
+
+	constexpr unsigned getWidth() const noexcept { return w; }
+	constexpr unsigned getHeight() const noexcept { return h; }
 };

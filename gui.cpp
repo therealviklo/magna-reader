@@ -28,7 +28,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 			rt.beginDraw();
 
 			for (const auto& i : pics)
-				rt.drawBitmap(i, 0, 0, 500, 500);
+				rt.drawBitmap(i, 0, 0, i.getWidth(), i.getHeight());
 
 			rt.endDraw(d2dfac);
 
