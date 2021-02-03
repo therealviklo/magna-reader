@@ -10,7 +10,8 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files)
 	  rt(
 		*this,
 		d2dfac
-	  )
+	  ),
+	  pic(0)
 {
 	pics.reserve(files.size());
 	for (const auto& i : files)
@@ -27,11 +28,19 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			rt.beginDraw();
 
-			for (const auto& i : pics)
-				rt.drawBitmap(i, 0, 0, i.getWidth(), i.getHeight());
+			if (!pics.empty())
+			{
+				const auto& bmp = pics.at(pic);
+				rt.drawBitmap(bmp, x, y, bmp.getWidth(), bmp.getHeight());
+			}
 
 			if (rt.endDraw(d2dfac))
 				ValidateRect(*this, nullptr);
+		}
+		return 0;
+		case WM_SIZE:
+		{
+			rt.resize(LOWORD(lParam), HIWORD(lParam));
 		}
 		return 0;
 	}
