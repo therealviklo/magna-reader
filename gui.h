@@ -1,16 +1,30 @@
 #pragma once
 #include <vector>
+#include <cstddef>
 #include "window.h"
 #include "d2d.h"
 
 class MainWindow : public Window
 {
 private:
-
-
 	D2DFactory d2dfac;
 	WICFactory wicfac;
-	RenderTarget rt;
+
+	class PageWindow : public Window
+	{
+		friend MainWindow;
+	private:
+		RenderTarget rt;
+	public:
+		PageWindow(HWND parent);
+
+		MainWindow& getMW() noexcept
+		{
+			return *dynamic_cast<MainWindow*>(reinterpret_cast<Window*>(GetWindowLongPtrW(GetParent(*this), GWLP_USERDATA)));
+		}
+		
+		LRESULT wndProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
+	} pageWindow;
 
 	std::vector<Bitmap> pics;
 	size_t pic;
@@ -23,6 +37,8 @@ private:
 		x = 0.0;
 		y = 0.0;
 	}
+
+	void onResize(unsigned w, unsigned h);
 public:
 	MainWindow(const std::vector<std::wstring>& files);
 
