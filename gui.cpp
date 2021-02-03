@@ -11,7 +11,9 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files)
 		*this,
 		d2dfac
 	  ),
-	  pic(0)
+	  pic(0),
+	  x(0.0),
+	  y(0.0)
 {
 	pics.reserve(files.size());
 	for (const auto& i : files)
