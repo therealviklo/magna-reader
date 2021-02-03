@@ -17,11 +17,6 @@ private:
 		RenderTarget rt;
 	public:
 		PageWindow(HWND parent);
-
-		MainWindow& getMW() noexcept
-		{
-			return *dynamic_cast<MainWindow*>(reinterpret_cast<Window*>(GetWindowLongPtrW(GetParent(*this), GWLP_USERDATA)));
-		}
 		
 		LRESULT wndProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
 	} pageWindow;

@@ -73,6 +73,12 @@ public:
 	// Kör den här för att få fönstret att uppdatera. (Annars fryser det.)
 	void update();
 
+	template <class ParentWindowClass>
+	ParentWindowClass& getParent() const
+	{
+		return dynamic_cast<MainWindow&>(*reinterpret_cast<Window*>(GetWindowLongPtrW(GetParent(hWnd.get()), GWLP_USERDATA)));
+	}
+
 	constexpr operator HWND() noexcept { return hWnd.get(); }
 	constexpr operator bool() const noexcept { return hWnd.get(); }
 };

@@ -10,12 +10,12 @@ MainWindow::PageWindow::PageWindow(HWND parent) :
 	),
 	rt(
 		*this,
-		getMW().d2dfac
+		getParent<MainWindow>().d2dfac
 	) {}
 
 LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	MainWindow& mw = getMW();
+	auto& mw = getParent<MainWindow>();
 	switch (msg)
 	{
  		case WM_PAINT:
