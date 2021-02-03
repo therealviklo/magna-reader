@@ -58,16 +58,23 @@ public:
 	RenderTarget(HWND hWnd, D2DFactory& d2dfac);
 
 	constexpr void beginDraw() noexcept { rt->BeginDraw(); }
-	constexpr void endDraw(D2DFactory& d2dfac)
+	// Returnerar false om rendertargeten återskapades
+	constexpr bool endDraw(D2DFactory& d2dfac)
 	{
 		HRESULT hr;
 		if (FAILED(hr = rt->EndDraw()))
 		{
 			if (hr == D2DERR_RECREATE_TARGET)
+			{
 				createRenderTarget(d2dfac);
+				return false;
+			}
 			else
+			{
 				throw WinError("Direct2D drawing error", hr);
+			}
 		}
+		return true;
 	}
 
 	constexpr void resize(unsigned int w, unsigned int h)

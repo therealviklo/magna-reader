@@ -30,9 +30,8 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 			for (const auto& i : pics)
 				rt.drawBitmap(i, 0, 0, i.getWidth(), i.getHeight());
 
-			rt.endDraw(d2dfac);
-
-			ValidateRect(*this, nullptr);
+			if (rt.endDraw(d2dfac))
+				ValidateRect(*this, nullptr);
 		}
 		return 0;
 	}
