@@ -15,17 +15,20 @@ MainWindow::PageWindow::PageWindow(HWND parent) :
 
 LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	auto& mw = getParent<MainWindow>();
 	switch (msg)
 	{
  		case WM_PAINT:
 		{
+			auto& mw = getParent<MainWindow>();
+			const RECT rc = getSize();
+
 			rt.beginDraw();
+			rt.clear();
 
 			if (!mw.pics.empty())
 			{
 				const auto& bmp = mw.pics.at(mw.pic);
-				rt.drawBitmap(bmp, mw.x, mw.y, bmp.getWidth(), bmp.getHeight());
+				rt.drawBitmap(bmp, (rc.right - bmp.getWidth()) / 2.0 + mw.x, mw.y, bmp.getWidth(), bmp.getHeight());
 			}
 
 			if (rt.endDraw(mw.d2dfac))
@@ -58,10 +61,8 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) :
 	x(0.0),
 	y(0.0)
 {
-	RECT rc{};
-	if (!GetClientRect(*this, &rc))
-		throw WinError("Failed to get client area");
-	onResize(rc.right - rc.left, rc.bottom - rc.top);
+	const RECT rc = getSize();
+	onResize(rc.right, rc.bottom);
 
 	pics.reserve(files.size());
 	for (const auto& i : files)
@@ -77,6 +78,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_SIZE:
 		{
 			onResize(LOWORD(lParam), HIWORD(lParam));
+			InvalidateRect(*this, nullptr, FALSE);
 		}
 		return 0;
 	}

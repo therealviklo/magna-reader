@@ -49,7 +49,7 @@ void RenderTarget::drawBitmap(const Bitmap& bitmap, float x, float y, float w, f
 {
 	rt->DrawBitmap(
 		bitmap.bmp.Get(),
-		D2D1::RectF(x, y, w, h),
+		D2D1::RectF(x, y, x + w, y + h),
 		alpha,
 		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
 		nullptr

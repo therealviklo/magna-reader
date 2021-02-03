@@ -83,6 +83,10 @@ public:
 	}
 
 	void drawBitmap(const Bitmap& bitmap, float x, float y, float w, float h, float alpha = 1.0f) noexcept;
+	void clear(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 1.0f) noexcept
+	{
+		rt->Clear(D2D1::ColorF(r, g, b, a));
+	}
 };
 
 class Bitmap

@@ -3,6 +3,7 @@
 #include "win.h"
 #include <commctrl.h>
 #include "utils.h"
+#include "winerror.h"
 
 // Klasser för att göra fönster.
 
@@ -77,6 +78,14 @@ public:
 	ParentWindowClass& getParent() const
 	{
 		return dynamic_cast<MainWindow&>(*reinterpret_cast<Window*>(GetWindowLongPtrW(GetParent(hWnd.get()), GWLP_USERDATA)));
+	}
+
+	RECT getSize() const
+	{
+		RECT rc{};
+		if (!GetClientRect(hWnd.get(), &rc))
+			throw WinError("Failed to get client area");
+		return rc;
 	}
 
 	constexpr operator HWND() noexcept { return hWnd.get(); }
