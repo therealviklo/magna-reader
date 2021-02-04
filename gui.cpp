@@ -81,6 +81,25 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 			InvalidateRect(*this, nullptr, FALSE);
 		}
 		return 0;
+		case WM_KEYDOWN:
+		{
+			switch (wParam)
+			{
+				case VK_LEFT:
+				{
+					prevPic();
+					InvalidateRect(*this, nullptr, FALSE);
+				}
+				return 0;
+				case VK_RIGHT:
+				{
+					nextPic();
+					InvalidateRect(*this, nullptr, FALSE);
+				}
+				return 0;
+			}
+		}
+		break;
 	}
 	return DefWindowProcW(*this, msg, wParam, lParam);
 }
