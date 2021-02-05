@@ -31,7 +31,10 @@ void RenderTarget::createRenderTarget(D2DFactory& d2dfac)
 	if (!GetClientRect(hWnd, &rc)) throw WinError("Failed to get window client area");
 
 	if (FAILED(hr = d2dfac.factory->CreateHwndRenderTarget(
-		D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_SOFTWARE),
+		D2D1::RenderTargetProperties(
+			D2D1_RENDER_TARGET_TYPE_SOFTWARE,
+			{DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}
+		),
 		D2D1::HwndRenderTargetProperties(
 			hWnd,
 			D2D1::SizeU(
@@ -81,14 +84,21 @@ Bitmap::Bitmap(const wchar_t* filename, WICFactory& wicfac, RenderTarget& rt)
 		&bmpDcd
 	))) throw WinError("Failed to decode image", hr);
 
-	ComPtr<IWICBitmapSource> bmpSrc;
-	if (FAILED(hr = bmpDcd->QueryInterface(
-		__uuidof(IWICBitmapSource),
-		&bmpSrc
-	))) throw WinError("Failed to query WIC bitmap source interface", hr);
+	ComPtr<IWICFormatConverter> fmtCnv;
+	if (FAILED(hr = wicfac.factory->CreateFormatConverter(&fmtCnv)))
+		throw WinError("Failed to create format converter", hr);
+
+	if (FAILED(hr = fmtCnv->Initialize(
+		bmpDcd.Get(),
+		GUID_WICPixelFormat32bppPBGRA,
+		WICBitmapDitherTypeNone,
+		nullptr,
+		0.0f,
+		WICBitmapPaletteTypeCustom
+	))) throw WinError("Failed to initalise format converter", hr);
 	
 	if (FAILED(hr = rt.rt->CreateBitmapFromWicBitmap(
-		bmpSrc.Get(),
+		fmtCnv.Get(),
 		&bmp
 	))) throw WinError("Failed to create Direct2D bitmap", hr);
 
