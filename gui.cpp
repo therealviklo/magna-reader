@@ -51,7 +51,21 @@ void MainWindow::loadPics(const std::vector<std::wstring>& files)
 	pics.reserve(files.size());
 	for (const auto& i : files)
 	{
-		pics.emplace_back(i.c_str(), wicfac, pageWindow.rt);
+		try
+		{
+			pics.emplace_back(i.c_str(), wicfac, pageWindow.rt);
+		}
+		catch (const WinError& e)
+		{
+			pics.clear();
+			std::wostringstream ss;
+			ss << L"Unable to open file \""
+			   << i
+			   << L"\" (Error code: 0x"
+			   << std::hex << e.hr
+			   << L")";
+			MessageBoxW(*this, ss.str().c_str(), L"Nonfatal error", MB_ICONERROR);
+		}
 	}
 }
 

@@ -18,7 +18,7 @@ inline void lippincott() noexcept
 		{
 			MessageBoxW(
 				nullptr,
-				stringToWstring(e.what()).c_str(),
+				e.wwhat(),
 				L"Error",
 				MB_ICONERROR
 			);
@@ -26,13 +26,22 @@ inline void lippincott() noexcept
 		catch (const WinError& e)
 		{
 			std::wostringstream ss;
-			ss << e.what()
-			<< " (Error code: 0x"
-			<< std::hex << e.hr
-			<< ")";
+			ss << e.wwhat()
+			   << L" (Error code: 0x"
+			   << std::hex << e.hr
+			   << L")";
 			MessageBoxW(
 				nullptr,
 				ss.str().c_str(),
+				L"Error",
+				MB_ICONERROR
+			);
+		}
+		catch (const Wexception& e)
+		{
+			MessageBoxW(
+				nullptr,
+				e.wwhat(),
 				L"Error",
 				MB_ICONERROR
 			);

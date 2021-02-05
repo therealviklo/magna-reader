@@ -14,7 +14,7 @@ public:
 	{
 		HRESULT hr;
 		if (FAILED(hr = CoInitialize(nullptr)))
-			throw WinError("Failed to initialise COM", hr);
+			throw WinError(L"Failed to initialise COM", hr);
 	}
 
 	~COMHandler()
@@ -71,7 +71,7 @@ public:
 			}
 			else
 			{
-				throw WinError("Direct2D drawing error", hr);
+				throw WinError(L"Direct2D drawing error", hr);
 			}
 		}
 		return true;

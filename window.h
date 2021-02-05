@@ -4,6 +4,7 @@
 #include <commctrl.h>
 #include "utils.h"
 #include "winerror.h"
+#include "lippincott.h"
 
 // Klasser för att göra fönster.
 
@@ -39,8 +40,6 @@ class Menu;
 class Window
 {
 	friend WindowClass;
-public:
-	EXCEPT(Exception);
 private:
 	UWnd hWnd;
 	static LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -84,7 +83,7 @@ public:
 	{
 		RECT rc{};
 		if (!GetClientRect(hWnd.get(), &rc))
-			throw WinError("Failed to get client area");
+			throw WinError(L"Failed to get client area");
 		return rc;
 	}
 
@@ -94,8 +93,6 @@ public:
 
 class Control
 {
-public:
-	EXCEPT(Exception);
 private:
 	UHandle<HWND, DestroyWindow> hWnd;
 
@@ -158,8 +155,6 @@ typedef std::pair<std::wstring, UINT_PTR> MenuItem;
 class Menu
 {
 	friend Window;
-public:
-	EXCEPT(Exception)
 private:
 	UHandle<HMENU, DestroyMenu> menu;
 public:

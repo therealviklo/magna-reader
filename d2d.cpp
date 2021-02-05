@@ -7,7 +7,7 @@ D2DFactory::D2DFactory()
 	if (FAILED(hr = D2D1CreateFactory<ID2D1Factory>(
 		D2D1_FACTORY_TYPE_SINGLE_THREADED,
 		&factory
-	))) throw WinError("Failed to create Direct2D factory", hr);
+	))) throw WinError(L"Failed to create Direct2D factory", hr);
 }
 
 WICFactory::WICFactory()
@@ -20,7 +20,7 @@ WICFactory::WICFactory()
 		CLSCTX_INPROC_SERVER,
 		__uuidof(IWICImagingFactory),
 		&factory
-	))) throw WinError("Failed to create WIC factory", hr);
+	))) throw WinError(L"Failed to create WIC factory", hr);
 }
 
 void RenderTarget::createRenderTarget(D2DFactory& d2dfac)
@@ -28,7 +28,7 @@ void RenderTarget::createRenderTarget(D2DFactory& d2dfac)
 	HRESULT hr;
 
 	RECT rc;
-	if (!GetClientRect(hWnd, &rc)) throw WinError("Failed to get window client area");
+	if (!GetClientRect(hWnd, &rc)) throw WinError(L"Failed to get window client area");
 
 	if (FAILED(hr = d2dfac.factory->CreateHwndRenderTarget(
 		D2D1::RenderTargetProperties(
@@ -42,7 +42,7 @@ void RenderTarget::createRenderTarget(D2DFactory& d2dfac)
 				rc.bottom - rc.top)
 		),
 		&rt
-	))) throw WinError("Failed to create hWnd render target", hr);
+	))) throw WinError(L"Failed to create hWnd render target", hr);
 
 	rt->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 	rt->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_ALIASED);
@@ -76,17 +76,17 @@ Bitmap::Bitmap(const wchar_t* filename, WICFactory& wicfac, RenderTarget& rt)
 		GENERIC_READ,
 		WICDecodeMetadataCacheOnDemand,
 		&decoder
-	))) throw WinError("Failed to create WIC image decoder", hr);
+	))) throw WinError(L"Failed to create WIC image decoder", hr);
 
 	ComPtr<IWICBitmapFrameDecode> bmpDcd;
 	if (FAILED(hr = decoder->GetFrame(
 		0,
 		&bmpDcd
-	))) throw WinError("Failed to decode image", hr);
+	))) throw WinError(L"Failed to decode image", hr);
 
 	ComPtr<IWICFormatConverter> fmtCnv;
 	if (FAILED(hr = wicfac.factory->CreateFormatConverter(&fmtCnv)))
-		throw WinError("Failed to create format converter", hr);
+		throw WinError(L"Failed to create format converter", hr);
 
 	if (FAILED(hr = fmtCnv->Initialize(
 		bmpDcd.Get(),
@@ -95,12 +95,12 @@ Bitmap::Bitmap(const wchar_t* filename, WICFactory& wicfac, RenderTarget& rt)
 		nullptr,
 		0.0f,
 		WICBitmapPaletteTypeCustom
-	))) throw WinError("Failed to initalise format converter", hr);
+	))) throw WinError(L"Failed to initalise format converter", hr);
 	
 	if (FAILED(hr = rt.rt->CreateBitmapFromWicBitmap(
 		fmtCnv.Get(),
 		&bmp
-	))) throw WinError("Failed to create Direct2D bitmap", hr);
+	))) throw WinError(L"Failed to create Direct2D bitmap", hr);
 
 	const auto size = bmp->GetPixelSize();
 	w = size.width;

@@ -7,12 +7,7 @@
 #include <memory>
 #include <concepts>
 #include "win.h"
-
-#define EXCEPT(name) \
-	struct name final : public std::runtime_error \
-	{ \
-		name(const char* msg) : std::runtime_error(msg) {} \
-	};
+#include "werror.h"
 
 template <typename T>
 std::string toString(T t)
@@ -42,7 +37,7 @@ inline std::string wstringToString(const std::wstring& s)
 		nullptr,
 		nullptr
 	);
-	if (!len) throw std::runtime_error("Failed to convert UTF-16 string to UTF-8 string");
+	if (!len) throw WRE(L"Failed to convert UTF-16 string to UTF-8 string");
 	std::string ret(len, '\0');
 	if (!WideCharToMultiByte(
 		CP_UTF8,
@@ -53,7 +48,7 @@ inline std::string wstringToString(const std::wstring& s)
 		ret.length(),
 		nullptr,
 		nullptr
-	)) throw std::runtime_error("Failed to convert UTF-16 string to UTF-8 string");
+	)) throw WRE(L"Failed to convert UTF-16 string to UTF-8 string");
 	return ret;
 }
 
@@ -67,7 +62,7 @@ inline std::wstring stringToWstring(const std::string& s)
 		nullptr,
 		0
 	);
-	if (!len) throw std::runtime_error("Failed to convert UTF-8 string to UTF-16 string");
+	if (!len) throw WRE(L"Failed to convert UTF-8 string to UTF-16 string");
 	std::wstring ret(len, L'\0');
 	if (!MultiByteToWideChar(
 		CP_UTF8,
@@ -76,7 +71,7 @@ inline std::wstring stringToWstring(const std::string& s)
 		s.length(),
 		&ret[0],
 		ret.length()
-	)) throw std::runtime_error("Failed to convert UTF-8 string to UTF-16 string");
+	)) throw WRE(L"Failed to convert UTF-8 string to UTF-16 string");
 	return ret;
 }
 
