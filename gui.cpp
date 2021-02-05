@@ -44,6 +44,17 @@ LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProcW(*this, msg, wParam, lParam);
 }
 
+void MainWindow::loadPics(const std::vector<std::wstring>& files)
+{
+	pics.clear();
+	setPic(0);
+	pics.reserve(files.size());
+	for (const auto& i : files)
+	{
+		pics.emplace_back(i.c_str(), wicfac, pageWindow.rt);
+	}
+}
+
 void MainWindow::onResize(unsigned w, unsigned h)
 {
 	MoveWindow(pageWindow, 0, 0, w, h, TRUE);
@@ -64,11 +75,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) :
 	const RECT rc = getSize();
 	onResize(rc.right, rc.bottom);
 
-	pics.reserve(files.size());
-	for (const auto& i : files)
-	{
-		pics.emplace_back(i.c_str(), wicfac, pageWindow.rt);
-	}
+	loadPics(files);
 }
 
 LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)

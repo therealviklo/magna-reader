@@ -33,6 +33,8 @@ private:
 		y = 0.0;
 	}
 
+	void loadPics(const std::vector<std::wstring>& files);
+
 	void onResize(unsigned w, unsigned h);
 public:
 	MainWindow(const std::vector<std::wstring>& files);
