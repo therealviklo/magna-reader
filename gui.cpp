@@ -28,7 +28,20 @@ LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 			if (!mw.pics.empty())
 			{
 				const auto& bmp = mw.pics.at(mw.pic);
-				rt.drawBitmap(bmp, (rc.right - bmp.getWidth()) / 2.0 + mw.x, mw.y, bmp.getWidth(), bmp.getHeight());
+				const struct {
+					float w;
+					float h;
+				} zoomedSize{
+					bmp.getWidth() * mw.zoom * mw.userZoom,
+					bmp.getHeight() * mw.zoom * mw.userZoom
+				};
+				rt.drawBitmap(
+					bmp,
+					(static_cast<float>(rc.right) - zoomedSize.w) / 2.0 - mw.x,
+					-mw.y,
+					zoomedSize.w,
+					zoomedSize.h
+				);
 			}
 
 			if (rt.endDraw(mw.d2dfac))
@@ -38,6 +51,8 @@ LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_SIZE:
 		{
 			rt.resize(LOWORD(lParam), HIWORD(lParam));
+			auto& mw = getParent<MainWindow>();
+			mw.calculateZoom();
 		}
 		return 0;	
 	}
@@ -65,6 +80,47 @@ void MainWindow::loadPics(const std::vector<std::wstring>& files)
 			   << std::hex << e.hr
 			   << L")";
 			MessageBoxW(*this, ss.str().c_str(), L"Nonfatal error", MB_ICONERROR);
+			return;
+		}
+	}
+	setPic(0);
+}
+
+void MainWindow::calculateZoom()
+{
+	if (!pics.empty())
+	{
+		switch (fitMode)
+		{
+			case FitMode::realSizeOrWidth:
+			{
+				const RECT size = pageWindow.getSize();
+				zoom = std::min<float>(size.right / (float)pics[pic].getWidth(), 1.0f);
+			}
+			break;
+			case FitMode::width:
+			{
+				const RECT size = pageWindow.getSize();
+				zoom = size.right / (float)pics[pic].getWidth();
+			}
+			break;
+			case FitMode::realSizeOrHeight:
+			{
+				const RECT size = pageWindow.getSize();
+				zoom = std::min<float>(size.bottom / (float)pics[pic].getHeight(), 1.0f);
+			}
+			break;
+			case FitMode::height:
+			{
+				const RECT size = pageWindow.getSize();
+				zoom = size.bottom / (float)pics[pic].getHeight();
+			}
+			break;
+			case FitMode::realSize:
+			{
+				zoom = 1.0f;
+			}
+			break;
 		}
 	}
 }
@@ -83,8 +139,12 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) :
 	),
 	pageWindow(*this),
 	pic(0),
-	x(0.0),
-	y(0.0)
+	easternReadingOrder(false),
+	fitMode(FitMode::realSizeOrWidth),
+	x(0.0f),
+	y(0.0f),
+	userZoom(1.0f),
+	zoom(1.0f)
 {
 	const RECT rc = getSize();
 	onResize(rc.right, rc.bottom);
@@ -108,19 +168,59 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 			{
 				case VK_LEFT:
 				{
-					prevPic();
+					if (easternReadingOrder)
+						nextPic();
+					else
+						prevPic();
 					InvalidateRect(*this, nullptr, FALSE);
 				}
 				return 0;
 				case VK_RIGHT:
 				{
-					nextPic();
+					if (easternReadingOrder)
+						prevPic();
+					else
+						nextPic();
 					InvalidateRect(*this, nullptr, FALSE);
 				}
 				return 0;
 			}
 		}
 		break;
+		case WM_MOUSEWHEEL:
+		{
+			const short delta = GET_WHEEL_DELTA_WPARAM(wParam);
+			const auto keys = LOWORD(wParam);
+			if ((keys & MK_CONTROL) || (keys & MK_SHIFT))
+			{
+				const RECT rc = getSize();
+				POINT mousePos{};
+				if (!GetCursorPos(&mousePos))
+					throw WinError(L"Failed to get cursor position");
+				if (!ScreenToClient(*this, &mousePos))
+					throw WinError(L"Failed to convert screen coordinates to client coordinates");
+				mousePos.x -= rc.right / 2;
+				mousePos.y -= rc.bottom / 2;
+
+				const float zoomFactor = std::exp(delta / 1000.0f);
+				userZoom *= zoomFactor;
+				x = (x + mousePos.x) * zoomFactor - mousePos.x;
+				y = (y + mousePos.y + rc.bottom / 2.0f) * zoomFactor - mousePos.y - rc.bottom / 2.0f;
+			}
+			else
+			{
+				y -= delta / 1.3f;
+			}
+			InvalidateRect(*this, nullptr, FALSE);
+		}
+		return 0;
+		case WM_MOUSEHWHEEL:
+		{
+			const short delta = GET_WHEEL_DELTA_WPARAM(wParam);
+			x += delta / 1.3f;
+			InvalidateRect(*this, nullptr, FALSE);
+		}
+		return 0;
 	}
 	return DefWindowProcW(*this, msg, wParam, lParam);
 }

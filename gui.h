@@ -3,6 +3,7 @@
 #include <cstddef>
 #include "window.h"
 #include "d2d.h"
+#include "windowsx.h"
 
 class MainWindow : public Window
 {
@@ -23,18 +24,33 @@ private:
 
 	std::vector<Bitmap> pics;
 	size_t pic;
+
+	bool easternReadingOrder;
+	enum struct FitMode {
+		realSizeOrWidth,
+		width,
+		realSizeOrHeight,
+		height,
+		realSize
+	} fitMode;
+
 	float x;
 	float y;
+	float userZoom;
+	float zoom;
 	
-	constexpr void setPic(size_t num) noexcept
+	constexpr void setPic(size_t num)
 	{
 		pic = num;
-		x = 0.0;
-		y = 0.0;
+		x = 0.0f;
+		y = 0.0f;
+		userZoom = 1.0f;
+		calculateZoom();
 	}
 
 	void loadPics(const std::vector<std::wstring>& files);
 
+	void calculateZoom();
 	void onResize(unsigned w, unsigned h);
 public:
 	MainWindow(const std::vector<std::wstring>& files);
