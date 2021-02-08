@@ -1,6 +1,6 @@
 #include "window.h"
 
-WindowClass defWindowClass(L"defWindowClass", (HBRUSH)COLOR_BACKGROUND, LoadCursorW(nullptr, IDC_ARROW));
+const WindowClass defWindowClass(L"defWindowClass", reinterpret_cast<HBRUSH>(COLOR_BACKGROUND), LoadCursorW(nullptr, IDC_ARROW));
 
 void updateAllWindows()
 {
@@ -235,10 +235,10 @@ Menu::Menu(std::initializer_list<std::variant<MenuItem, SubMenu>> elements)
 			if (AppendMenuW(
 				menu.get(),
 				MF_POPUP,
-				(UINT_PTR)(HMENU)const_cast<Menu*>(&std::get<SubMenu>(e).second)->menu.get(),
+				(UINT_PTR)(HMENU)std::get<SubMenu>(e).second.menu.get(),
 				std::get<SubMenu>(e).first.c_str()
 			) == 0) throw WinError(L"Failed to create meny item");
-			(void)const_cast<Menu*>(&std::get<SubMenu>(e).second)->menu.release();
+			(void)std::get<SubMenu>(e).second.menu.release();
 		}
 	}
 }

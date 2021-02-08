@@ -2,7 +2,7 @@
 
 D2DFactory::D2DFactory()
 {
-	HRESULT hr;
+	HRESULT hr = 0;
 
 	if (FAILED(hr = D2D1CreateFactory<ID2D1Factory>(
 		D2D1_FACTORY_TYPE_SINGLE_THREADED,
@@ -12,7 +12,7 @@ D2DFactory::D2DFactory()
 
 WICFactory::WICFactory()
 {
-	HRESULT hr;
+	HRESULT hr = 0;
 
 	if (FAILED(hr = CoCreateInstance(
 		CLSID_WICImagingFactory,
@@ -25,7 +25,7 @@ WICFactory::WICFactory()
 
 void RenderTarget::createRenderTarget(D2DFactory& d2dfac)
 {
-	HRESULT hr;
+	HRESULT hr = 0;
 
 	RECT rc;
 	if (GetClientRect(hWnd, &rc) == 0) throw WinError(L"Failed to get window client area");
@@ -67,7 +67,7 @@ RenderTarget::RenderTarget(HWND hWnd, D2DFactory& d2dfac)
 
 Bitmap::Bitmap(const wchar_t* filename, WICFactory& wicfac, RenderTarget& rt)
 {
-	HRESULT hr;
+	HRESULT hr = 0;
 
 	ComPtr<IWICBitmapDecoder> decoder;
 	if (FAILED(hr = wicfac.factory->CreateDecoderFromFilename(

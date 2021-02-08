@@ -156,9 +156,9 @@ class Menu
 {
 	friend Window;
 private:
-	UHandle<HMENU, DestroyMenu> menu;
+	mutable UHandle<HMENU, DestroyMenu> menu;
 public:
 	Menu(std::initializer_list<std::variant<MenuItem, SubMenu>> elements);
 };
 
-extern WindowClass defWindowClass;
+extern const WindowClass defWindowClass;
