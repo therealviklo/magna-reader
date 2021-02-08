@@ -1,0 +1,1 @@
+@vmake %* -o mr.exe -O2 -std=c++20 -Wall -Wextra -luser32 -lcomctl32 -lshell32 -lgdi32 -ld2d1

@@ -1,0 +1,1 @@
+@flags.bat clang-tidy NAMN --quiet -checks=-*,bugprone-* --
