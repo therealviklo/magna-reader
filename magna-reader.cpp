@@ -12,6 +12,7 @@ std::vector<std::wstring> getCmdLineArgs(const wchar_t* cmdLine)
 	const UHandle<wchar_t**, LocalFree> strs(CommandLineToArgvW(cmdLine, &argc));
 	if (!strs) throw std::runtime_error("Failed to convert command line to argv");
 	std::vector<std::wstring> vec;
+	vec.reserve(argc);
 	for (int i = 0; i < argc; i++)
 	{
 		vec.emplace_back(strs.get()[i]);
