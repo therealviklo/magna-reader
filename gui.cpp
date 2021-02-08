@@ -32,12 +32,12 @@ LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 					float w;
 					float h;
 				} zoomedSize{
-					bmp.getWidth() * mw.zoom * mw.userZoom,
-					bmp.getHeight() * mw.zoom * mw.userZoom
+					static_cast<float>(bmp.getWidth()) * mw.zoom * mw.userZoom,
+					static_cast<float>(bmp.getHeight()) * mw.zoom * mw.userZoom
 				};
 				rt.drawBitmap(
 					bmp,
-					(static_cast<float>(rc.right) - zoomedSize.w) / 2.0 - mw.x,
+					(static_cast<float>(rc.right) - zoomedSize.w) / 2.0f - mw.x,
 					-mw.y,
 					zoomedSize.w,
 					zoomedSize.h
@@ -125,7 +125,7 @@ void MainWindow::calculateZoom()
 	}
 }
 
-void MainWindow::onResize(unsigned w, unsigned h)
+void MainWindow::onResize(int w, int h)
 {
 	MoveWindow(pageWindow, 0, 0, w, h, TRUE);
 }
@@ -202,14 +202,14 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				mousePos.x -= rc.right / 2;
 				mousePos.y -= rc.bottom / 2;
 
-				const float zoomFactor = std::exp(delta / 1000.0f);
+				const float zoomFactor = std::exp(static_cast<float>(delta) / 1000.0f);
 				userZoom *= zoomFactor;
 				x = (x + mousePos.x) * zoomFactor - mousePos.x;
 				y = (y + mousePos.y + rc.bottom / 2.0f) * zoomFactor - mousePos.y - rc.bottom / 2.0f;
 			}
 			else
 			{
-				y -= delta / 1.3f;
+				y -= static_cast<float>(delta) / 1.3f;
 			}
 			InvalidateRect(*this, nullptr, FALSE);
 		}
@@ -217,7 +217,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_MOUSEHWHEEL:
 		{
 			const short delta = GET_WHEEL_DELTA_WPARAM(wParam);
-			x += delta / 1.3f;
+			x += static_cast<float>(delta) / 1.3f;
 			InvalidateRect(*this, nullptr, FALSE);
 		}
 		return 0;

@@ -58,7 +58,7 @@ LRESULT CALLBACK Window::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 				/* Om fönstret har förstörts av något annat än window->hWnd:s destruktor så
 				   ser det här till att destruktorn inte också gör det. (Annars gör det här
 				   ingen skillnad.) */
-				window->hWnd.release();
+				(void)window->hWnd.release();
 			}
 			return 0;
 		}
@@ -132,7 +132,7 @@ Window::Window(
 		this
 	));
 	if (!hWnd) throw WinError(L"Failed to create window");
-	menu.menu.release();
+	(void)menu.menu.release();
 	ShowWindow(hWnd.get(), SW_SHOW);
 }
 
@@ -148,7 +148,7 @@ LRESULT Control::subclassProc(HWND /*hWnd*/, UINT msg, WPARAM wParam, LPARAM lPa
 {
 	if (msg == WM_DESTROY)
 	{
-		reinterpret_cast<Control*>(refData)->hWnd.release();
+		(void)reinterpret_cast<Control*>(refData)->hWnd.release();
 		return TRUE;
 	}
 	return reinterpret_cast<Control*>(refData)->proc(msg, wParam, lParam);
@@ -238,7 +238,7 @@ Menu::Menu(std::initializer_list<std::variant<MenuItem, SubMenu>> elements)
 				(UINT_PTR)(HMENU)const_cast<Menu*>(&std::get<SubMenu>(e).second)->menu.get(),
 				std::get<SubMenu>(e).first.c_str()
 			)) throw WinError(L"Failed to create meny item");
-			const_cast<Menu*>(&std::get<SubMenu>(e).second)->menu.release();
+			(void)const_cast<Menu*>(&std::get<SubMenu>(e).second)->menu.release();
 		}
 	}
 }

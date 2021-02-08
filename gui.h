@@ -51,7 +51,7 @@ private:
 	void loadPics(const std::vector<std::wstring>& files);
 
 	void calculateZoom();
-	void onResize(unsigned w, unsigned h);
+	void onResize(int w, int h);
 public:
 	MainWindow(const std::vector<std::wstring>& files);
 
