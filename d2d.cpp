@@ -28,7 +28,7 @@ void RenderTarget::createRenderTarget(D2DFactory& d2dfac)
 	HRESULT hr;
 
 	RECT rc;
-	if (!GetClientRect(hWnd, &rc)) throw WinError(L"Failed to get window client area");
+	if (GetClientRect(hWnd, &rc) == 0) throw WinError(L"Failed to get window client area");
 
 	if (FAILED(hr = d2dfac.factory->CreateHwndRenderTarget(
 		D2D1::RenderTargetProperties(
@@ -93,7 +93,7 @@ Bitmap::Bitmap(const wchar_t* filename, WICFactory& wicfac, RenderTarget& rt)
 		GUID_WICPixelFormat32bppPBGRA,
 		WICBitmapDitherTypeNone,
 		nullptr,
-		0.0f,
+		0.0F,
 		WICBitmapPaletteTypeCustom
 	))) throw WinError(L"Failed to initalise format converter", hr);
 	

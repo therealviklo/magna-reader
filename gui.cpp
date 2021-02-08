@@ -37,7 +37,7 @@ LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				};
 				rt.drawBitmap(
 					bmp,
-					(static_cast<float>(rc.right) - zoomedSize.w) / 2.0f - mw.x,
+					(static_cast<float>(rc.right) - zoomedSize.w) / 2.0F - mw.x,
 					-mw.y,
 					zoomedSize.w,
 					zoomedSize.h
@@ -95,7 +95,7 @@ void MainWindow::calculateZoom()
 			case FitMode::realSizeOrWidth:
 			{
 				const RECT size = pageWindow.getSize();
-				zoom = std::min<float>(size.right / (float)pics[pic].getWidth(), 1.0f);
+				zoom = std::min<float>(size.right / (float)pics[pic].getWidth(), 1.0F);
 			}
 			break;
 			case FitMode::width:
@@ -107,7 +107,7 @@ void MainWindow::calculateZoom()
 			case FitMode::realSizeOrHeight:
 			{
 				const RECT size = pageWindow.getSize();
-				zoom = std::min<float>(size.bottom / (float)pics[pic].getHeight(), 1.0f);
+				zoom = std::min<float>(size.bottom / (float)pics[pic].getHeight(), 1.0F);
 			}
 			break;
 			case FitMode::height:
@@ -118,7 +118,7 @@ void MainWindow::calculateZoom()
 			break;
 			case FitMode::realSize:
 			{
-				zoom = 1.0f;
+				zoom = 1.0F;
 			}
 			break;
 		}
@@ -141,10 +141,10 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) :
 	pic(0),
 	easternReadingOrder(false),
 	fitMode(FitMode::realSizeOrWidth),
-	x(0.0f),
-	y(0.0f),
-	userZoom(1.0f),
-	zoom(1.0f)
+	x(0.0F),
+	y(0.0F),
+	userZoom(1.0F),
+	zoom(1.0F)
 {
 	const RECT rc = getSize();
 	onResize(rc.right, rc.bottom);
@@ -191,25 +191,25 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			const short delta = GET_WHEEL_DELTA_WPARAM(wParam);
 			const auto keys = LOWORD(wParam);
-			if ((keys & MK_CONTROL) || (keys & MK_SHIFT))
+			if (((keys & MK_CONTROL) != 0) || ((keys & MK_SHIFT) != 0))
 			{
 				const RECT rc = getSize();
 				POINT mousePos{};
-				if (!GetCursorPos(&mousePos))
+				if (GetCursorPos(&mousePos) == 0)
 					throw WinError(L"Failed to get cursor position");
-				if (!ScreenToClient(*this, &mousePos))
+				if (ScreenToClient(*this, &mousePos) == 0)
 					throw WinError(L"Failed to convert screen coordinates to client coordinates");
 				mousePos.x -= rc.right / 2;
 				mousePos.y -= rc.bottom / 2;
 
-				const float zoomFactor = std::exp(static_cast<float>(delta) / 1000.0f);
+				const float zoomFactor = std::exp(static_cast<float>(delta) / 1000.0F);
 				userZoom *= zoomFactor;
 				x = (x + mousePos.x) * zoomFactor - mousePos.x;
-				y = (y + mousePos.y + rc.bottom / 2.0f) * zoomFactor - mousePos.y - rc.bottom / 2.0f;
+				y = (y + mousePos.y + rc.bottom / 2.0F) * zoomFactor - mousePos.y - rc.bottom / 2.0F;
 			}
 			else
 			{
-				y -= static_cast<float>(delta) / 1.3f;
+				y -= static_cast<float>(delta) / 1.3F;
 			}
 			InvalidateRect(*this, nullptr, FALSE);
 		}
@@ -217,7 +217,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_MOUSEHWHEEL:
 		{
 			const short delta = GET_WHEEL_DELTA_WPARAM(wParam);
-			x += static_cast<float>(delta) / 1.3f;
+			x += static_cast<float>(delta) / 1.3F;
 			InvalidateRect(*this, nullptr, FALSE);
 		}
 		return 0;

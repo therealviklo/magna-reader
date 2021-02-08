@@ -22,7 +22,7 @@ WindowClass::WindowClass(std::wstring className, HBRUSH backgroundColour, HCURSO
 	wc.hbrBackground = backgroundColour + 1;
 	wc.hCursor = cursor;
 
-	registered = RegisterClassExW(&wc);
+	registered = (RegisterClassExW(&wc) != 0U);
 }
 
 WindowClass::~WindowClass()
@@ -35,16 +35,16 @@ LRESULT CALLBACK Window::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 	if (msg == WM_CREATE)
 	{
 		SetLastError(0);
-		if (!SetWindowLongPtrW(
+		if ((SetWindowLongPtrW(
 			hWnd,
 			GWLP_USERDATA,
 			(long long)reinterpret_cast<CREATESTRUCTW*>(lParam)->lpCreateParams
-		) && GetLastError()) return -1;
+		) == 0) && (GetLastError() != 0U)) return -1;
 		return 0;
 	}
 
-	auto const window = reinterpret_cast<Window*>(GetWindowLongPtrW(hWnd, GWLP_USERDATA));
-	if (window)
+	auto* const window = reinterpret_cast<Window*>(GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+	if ((bool)window)
 	{
 		switch (msg)
 		{
@@ -172,7 +172,7 @@ Control::Control(const wchar_t* wc, DWORD style, DWORD exStyle, const wchar_t* n
 	));
 	if (!hWnd) throw WinError(L"Failed to create control");
 
-	if (!SetWindowSubclass(hWnd.get(), subclassProc, 1, (DWORD_PTR)this))
+	if (SetWindowSubclass(hWnd.get(), subclassProc, 1, (DWORD_PTR)this) == 0)
 		throw WinError(L"Failed to change the control's window subclass");
 }
 
@@ -208,9 +208,9 @@ UpDown::UpDown(DWORD style, DWORD exStyle, HWND buddy, HWND parent)
 
 int UpDown::getValue()
 {
-	BOOL success = false;
+	BOOL success = FALSE;
 	int ret = SendMessageW(*this, UDM_GETPOS32, 0, reinterpret_cast<LPARAM>(&success));
-	if (success) throw WinError(L"Failed to get value from number entry box");
+	if (success != FALSE) throw WinError(L"Failed to get value from number entry box");
 	return ret;
 }
 
@@ -219,25 +219,25 @@ Menu::Menu(std::initializer_list<std::variant<MenuItem, SubMenu>> elements)
 {
 	if (!menu) throw WinError(L"Failed to create menu");
 
-	for (auto& e : elements)
+	for (const auto& e : elements)
 	{
 		if (std::holds_alternative<MenuItem>(e))
 		{
-			if (!AppendMenuW(
+			if (AppendMenuW(
 				menu.get(),
 				MF_STRING,
 				std::get<MenuItem>(e).second,
 				std::get<MenuItem>(e).first.c_str()
-			)) throw WinError(L"Failed to create meny item");
+			) == 0) throw WinError(L"Failed to create meny item");
 		}
 		else if (std::holds_alternative<SubMenu>(e))
 		{
-			if (!AppendMenuW(
+			if (AppendMenuW(
 				menu.get(),
 				MF_POPUP,
 				(UINT_PTR)(HMENU)const_cast<Menu*>(&std::get<SubMenu>(e).second)->menu.get(),
 				std::get<SubMenu>(e).first.c_str()
-			)) throw WinError(L"Failed to create meny item");
+			) == 0) throw WinError(L"Failed to create meny item");
 			(void)const_cast<Menu*>(&std::get<SubMenu>(e).second)->menu.release();
 		}
 	}

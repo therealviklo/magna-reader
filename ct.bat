@@ -1,1 +1,1 @@
-@flags.bat clang-tidy NAMN --quiet -checks=-*,bugprone-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type*,performance-* --
+@flags.bat clang-tidy NAMN --quiet -checks=-*,bugprone-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type*,performance-*,readability-*,-readability-braces-around-statements*,-readability-magic-numbers* %* --
