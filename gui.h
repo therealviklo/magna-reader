@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <algorithm>
 #include <cstddef>
 #include "window.h"
 #include "d2d.h"
@@ -50,6 +51,7 @@ private:
 
 	void loadPics(const std::vector<std::wstring>& files);
 
+	void centerOnImage();
 	void calculateZoom();
 	void onResize(int w, int h);
 public:

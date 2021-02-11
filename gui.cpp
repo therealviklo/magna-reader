@@ -86,6 +86,39 @@ void MainWindow::loadPics(const std::vector<std::wstring>& files)
 	setPic(0);
 }
 
+void MainWindow::centerOnImage()
+{
+	if (!pics.empty())
+	{
+		const RECT pwSize = pageWindow.getSize();
+		const auto picWidth = static_cast<float>(pics[pic].getWidth()) * zoom * userZoom;
+		const auto picHeight = static_cast<float>(pics[pic].getHeight()) * zoom * userZoom;
+
+		const float minX = static_cast<float>(pwSize.right) / 2.0F - picWidth / 2.0F;
+		const float maxX = picWidth / 2.0F - static_cast<float>(pwSize.right) / 2.0F;
+
+		const float maxY = picHeight - static_cast<float>(pwSize.bottom);
+
+		if (minX < maxX)
+		{
+			x = std::clamp<float>(x, minX, maxX);
+		}
+		else
+		{
+			x = 0.0F;
+		}
+
+		if (0.0F < maxY)
+		{
+			y = std::clamp<float>(y, 0.0F, maxY);
+		}
+		else
+		{
+			y = 0.0F;
+		}
+	}
+}
+
 void MainWindow::calculateZoom()
 {
 	if (!pics.empty())
@@ -211,6 +244,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 			{
 				y -= static_cast<float>(delta) / 1.3F;
 			}
+			centerOnImage();
 			InvalidateRect(*this, nullptr, FALSE);
 		}
 		return 0;
@@ -218,6 +252,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			const short delta = GET_WHEEL_DELTA_WPARAM(wParam);
 			x += static_cast<float>(delta) / 1.3F;
+			centerOnImage();
 			InvalidateRect(*this, nullptr, FALSE);
 		}
 		return 0;
