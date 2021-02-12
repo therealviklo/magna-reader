@@ -6,6 +6,15 @@
 #include "d2d.h"
 #include "windowsx.h"
 
+namespace MenuId
+{
+	enum MenuId_t : UINT_PTR
+	{
+		open
+	};
+}
+using MenuId::MenuId_t;
+
 class MainWindow : public Window
 {
 private:

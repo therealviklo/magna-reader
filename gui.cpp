@@ -168,7 +168,15 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) :
 		defWindowClass,
 		WS_OVERLAPPEDWINDOW,
 		WS_EX_OVERLAPPEDWINDOW,
-		L"Magna Reader"
+		L"Magna Reader",
+		Menu{
+			SubMenu{
+				L"File",
+				Menu{
+					MenuItem{L"Open", MenuId::open}
+				}
+			}
+		}
 	),
 	pageWindow(*this),
 	pic(0),
@@ -312,6 +320,21 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 			InvalidateRect(*this, nullptr, FALSE);
 		}
 		return 0;
+		case WM_COMMAND:
+		{
+			if (HIWORD(wParam) == 0)
+			{
+				switch (LOWORD(wParam))
+				{
+					case MenuId::open:
+					{
+						MessageBoxW(*this, L"Clicked", L"button", 0);
+					}
+					return 0;
+				}
+			}
+		}
+		break;
 	}
 	return DefWindowProcW(*this, msg, wParam, lParam);
 }
