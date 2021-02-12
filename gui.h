@@ -2,9 +2,12 @@
 #include <vector>
 #include <algorithm>
 #include <cstddef>
+#include <optional>
+#include <array>
 #include "window.h"
 #include "d2d.h"
 #include "windowsx.h"
+#include <shobjidl_core.h>
 
 namespace MenuId
 {
@@ -58,6 +61,7 @@ private:
 		calculateZoom();
 	}
 
+	std::optional<std::vector<std::wstring>> openFileDialogue();
 	void loadPics(const std::vector<std::wstring>& files);
 
 	void centerOnImage();

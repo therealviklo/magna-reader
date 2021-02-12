@@ -59,6 +59,80 @@ LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProcW(*this, msg, wParam, lParam);
 }
 
+std::optional<std::vector<std::wstring>> MainWindow::openFileDialogue()
+{
+	HRESULT hr = 0;
+	
+	ComPtr<IFileOpenDialog> fop;
+	if (FAILED(hr = CoCreateInstance(
+		CLSID_FileOpenDialog,
+		nullptr,
+		CLSCTX_ALL,
+		__uuidof(IFileOpenDialog),
+		&fop
+	))) throw WinError(L"Failed to create file dialogue", hr);
+
+	DWORD flags = 0;
+	if (FAILED(hr = fop->GetOptions(&flags)))
+		throw WinError(L"Failed to get file dialogue options", hr);
+		
+	if (FAILED(hr = fop->SetOptions(flags | FOS_FORCEFILESYSTEM | FOS_ALLOWMULTISELECT)))
+		throw WinError(L"Failed to set file dialogue options", hr);
+
+	constexpr auto fileExts = std::to_array<COMDLG_FILTERSPEC>({
+		{L"All", L"*.*"},
+		{L"PNG", L"*.png"},
+		{L"JPEG", L"*.jpg;*.jpeg"},
+		{L"Bitmap", L"*.bmp"},
+	});
+
+	if (FAILED(hr = fop->SetFileTypes(
+		fileExts.size(),
+		fileExts.data()
+	))) throw WinError(L"Failed to set file dialogue file types", hr);
+
+	if (FAILED(hr = fop->SetFileTypeIndex(1)))
+		throw WinError(L"Failed to set default file dialogue file type index", hr);
+
+	if (FAILED(hr = fop->SetDefaultExtension(L"*.*")))
+		throw WinError(L"Failed to set default file dialogue file extension", hr);
+
+	if (FAILED(hr = fop->Show(*this)))
+	{
+		if (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED))
+			return {};
+		throw WinError(L"Failed to show file dialogue", hr);
+	}
+
+	ComPtr<IShellItemArray> sia;
+	if (FAILED(hr = fop->GetResults(&sia)))
+		throw WinError(L"Failed to get file dialogue results", hr);
+	
+	DWORD fileCount = 0;
+	if (FAILED(hr = sia->GetCount(&fileCount)))
+		throw WinError(L"Failed to get selected file count", hr);
+
+	std::optional<std::vector<std::wstring>> files(std::in_place);
+	files->reserve(fileCount);
+	for (DWORD i = 0; i < fileCount; i++)
+	{
+		ComPtr<IShellItem> si;
+		if (FAILED(hr = sia->GetItemAt(i, &si)))
+			throw WinError(L"Failed to get selected file", hr);
+
+		wchar_t* tmpFilename = nullptr;
+		if (FAILED(hr = si->GetDisplayName(
+			SIGDN_FILESYSPATH,
+			&tmpFilename
+		)))	throw WinError(L"Failed to get selected file", hr);
+		const UHandle<wchar_t*, CoTaskMemFree> filename(tmpFilename);
+
+		files->emplace_back(filename.get());
+	}
+
+	return files;
+}
+
 void MainWindow::loadPics(const std::vector<std::wstring>& files)
 {
 	pics.clear();
@@ -328,7 +402,12 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				{
 					case MenuId::open:
 					{
-						MessageBoxW(*this, L"Clicked", L"button", 0);
+						const auto files = openFileDialogue();
+						if (files)
+						{
+							loadPics(*files);
+							InvalidateRect(*this, nullptr, FALSE);
+						}
 					}
 					return 0;
 				}
