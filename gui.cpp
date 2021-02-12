@@ -173,7 +173,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) :
 	pageWindow(*this),
 	pic(0),
 	easternReadingOrder(false),
-	fitMode(FitMode::realSizeOrWidth),
+	fitMode(FitMode::width),
 	x(0.0F),
 	y(0.0F),
 	userZoom(1.0F),
@@ -214,6 +214,62 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 						prevPic();
 					else
 						nextPic();
+					InvalidateRect(*this, nullptr, FALSE);
+				}
+				return 0;
+				case VK_UP:
+				{
+					y -= 120.0F / 1.3F;
+					centerOnImage();
+					InvalidateRect(*this, nullptr, FALSE);
+				}
+				return 0;
+				case VK_DOWN:
+				{
+					y += 120.0F / 1.3F;
+					centerOnImage();
+					InvalidateRect(*this, nullptr, FALSE);
+				}
+				return 0;
+				case VK_PRIOR:
+				{
+					const RECT size = pageWindow.getSize();
+					y -= static_cast<float>(size.bottom) * 0.95F;
+					centerOnImage();
+					InvalidateRect(*this, nullptr, FALSE);
+				}
+				return 0;
+				case VK_NEXT:
+				{
+					const RECT size = pageWindow.getSize();
+					y += static_cast<float>(size.bottom) * 0.95F;
+					centerOnImage();
+					InvalidateRect(*this, nullptr, FALSE);
+				}
+				return 0;
+				case VK_HOME:
+				{
+					y = 0.0F;
+					centerOnImage();
+					InvalidateRect(*this, nullptr, FALSE);
+				}
+				return 0;
+				case VK_END:
+				{
+					const RECT size = pageWindow.getSize();
+					const auto picHeight = static_cast<float>(pics[pic].getHeight()) * zoom * userZoom;
+					const auto maxY = picHeight - static_cast<float>(size.bottom);
+					
+					if (0.0F < maxY)
+					{
+						y = maxY;
+					}
+					else
+					{
+						y = 0.0F;
+					}
+					
+					centerOnImage();
 					InvalidateRect(*this, nullptr, FALSE);
 				}
 				return 0;
