@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <optional>
 #include <array>
+#include <filesystem>
 #include "window.h"
 #include "d2d.h"
 #include "windowsx.h"
@@ -13,7 +14,8 @@ namespace MenuId
 {
 	enum MenuId_t : UINT_PTR
 	{
-		open
+		openFiles,
+		openFolder
 	};
 }
 using MenuId::MenuId_t;
@@ -62,7 +64,9 @@ private:
 	}
 
 	std::optional<std::vector<std::wstring>> openFileDialogue();
+	std::optional<std::wstring> openFolderDialogue();
 	void loadPics(const std::vector<std::wstring>& files);
+	void loadFolder(const std::wstring& folder);
 
 	void centerOnImage();
 	void calculateZoom();

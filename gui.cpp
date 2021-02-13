@@ -75,7 +75,7 @@ std::optional<std::vector<std::wstring>> MainWindow::openFileDialogue()
 	DWORD flags = 0;
 	if (FAILED(hr = fop->GetOptions(&flags)))
 		throw WinError(L"Failed to get file dialogue options", hr);
-		
+
 	if (FAILED(hr = fop->SetOptions(flags | FOS_FORCEFILESYSTEM | FOS_ALLOWMULTISELECT)))
 		throw WinError(L"Failed to set file dialogue options", hr);
 
@@ -137,6 +137,47 @@ std::optional<std::vector<std::wstring>> MainWindow::openFileDialogue()
 	return files;
 }
 
+std::optional<std::wstring> MainWindow::openFolderDialogue()
+{
+	HRESULT hr = 0;
+	
+	ComPtr<IFileOpenDialog> fop;
+	if (FAILED(hr = CoCreateInstance(
+		CLSID_FileOpenDialog,
+		nullptr,
+		CLSCTX_ALL,
+		__uuidof(IFileOpenDialog),
+		&fop
+	))) throw WinError(L"Failed to create folder dialogue", hr);
+
+	DWORD flags = 0;
+	if (FAILED(hr = fop->GetOptions(&flags)))
+		throw WinError(L"Failed to get folder dialogue options", hr);
+
+	if (FAILED(hr = fop->SetOptions(flags | FOS_FORCEFILESYSTEM | FOS_PICKFOLDERS)))
+		throw WinError(L"Failed to set folder dialogue options", hr);
+
+	if (FAILED(hr = fop->Show(*this)))
+	{
+		if (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED))
+			return {};
+		throw WinError(L"Failed to show folder dialogue", hr);
+	}
+
+	ComPtr<IShellItem> si;
+	if (FAILED(hr = fop->GetResult(&si)))
+		throw WinError(L"Failed to get folder dialogue result", hr);
+
+	wchar_t* tmpFilename = nullptr;
+	if (FAILED(hr = si->GetDisplayName(
+		SIGDN_FILESYSPATH,
+		&tmpFilename
+	)))	throw WinError(L"Failed to get selected folder", hr);
+	const UHandle<wchar_t*, CoTaskMemFree> filename(tmpFilename);
+
+	return std::optional<std::wstring>(std::in_place, filename.get());
+}
+
 void MainWindow::loadPics(const std::vector<std::wstring>& files)
 {
 	pics.clear();
@@ -162,6 +203,40 @@ void MainWindow::loadPics(const std::vector<std::wstring>& files)
 		}
 	}
 	setPic(0);
+}
+
+void MainWindow::loadFolder(const std::wstring& folder)
+{
+	constexpr auto validFileExts = std::to_array<const wchar_t*>({
+		L".bmp,",
+		L".gif",
+		L".ico",
+		L".jpeg",
+		L".jpe",
+		L".jpg",
+		L".png",
+		L".tiff",
+		L".tif",
+	});
+
+	std::vector<std::wstring> imgs;
+	for (const auto& p : std::filesystem::directory_iterator(folder))
+	{
+		if (!p.is_directory())
+		{
+			const std::wstring ext = p.path().extension();
+			for (const auto& vfe : validFileExts)
+			{
+				if (ext == vfe)
+				{
+					imgs.emplace_back(p.path());
+					break;
+				}
+			}
+		}
+	}
+
+	loadPics(imgs);
 }
 
 void MainWindow::centerOnImage()
@@ -251,7 +326,8 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) :
 			SubMenu{
 				L"File",
 				Menu{
-					MenuItem{L"Open", MenuId::open}
+					MenuItem{L"Open Files", MenuId::openFiles},
+					MenuItem{L"Open Folder", MenuId::openFolder}
 				}
 			}
 		}
@@ -404,12 +480,22 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 			{
 				switch (LOWORD(wParam))
 				{
-					case MenuId::open:
+					case MenuId::openFiles:
 					{
 						const auto files = openFileDialogue();
 						if (files)
 						{
 							loadPics(*files);
+							InvalidateRect(*this, nullptr, FALSE);
+						}
+					}
+					return 0;
+					case MenuId::openFolder:
+					{
+						const auto folder = openFolderDialogue();
+						if (folder)
+						{
+							loadFolder(*folder);
 							InvalidateRect(*this, nullptr, FALSE);
 						}
 					}
