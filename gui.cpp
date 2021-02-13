@@ -208,7 +208,7 @@ void MainWindow::loadPics(const std::vector<std::wstring>& files)
 void MainWindow::loadFolder(const std::wstring& folder)
 {
 	constexpr auto validFileExts = std::to_array<const wchar_t*>({
-		L".bmp,",
+		L".bmp",
 		L".gif",
 		L".ico",
 		L".jpeg",
