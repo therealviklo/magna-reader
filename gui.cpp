@@ -80,10 +80,14 @@ std::optional<std::vector<std::wstring>> MainWindow::openFileDialogue()
 		throw WinError(L"Failed to set file dialogue options", hr);
 
 	constexpr auto fileExts = std::to_array<COMDLG_FILTERSPEC>({
+		{L"All Images", L"*.bmp;*.gif;*.ico;*.jpeg;*.jpe;*.jpg;*.png;*.tiff;*.tif"},
 		{L"All", L"*.*"},
-		{L"PNG", L"*.png"},
-		{L"JPEG", L"*.jpg;*.jpeg"},
 		{L"Bitmap", L"*.bmp"},
+		{L"GIF", L"*.gif"},
+		{L"Icon", L"*.ico"},
+		{L"JPEG", L"*.jpeg;*.jpe;*.jpg"},
+		{L"PNG", L"*.png"},
+		{L"TIFF", L"*.tiff;*.tif"},
 	});
 
 	if (FAILED(hr = fop->SetFileTypes(
@@ -94,7 +98,7 @@ std::optional<std::vector<std::wstring>> MainWindow::openFileDialogue()
 	if (FAILED(hr = fop->SetFileTypeIndex(1)))
 		throw WinError(L"Failed to set default file dialogue file type index", hr);
 
-	if (FAILED(hr = fop->SetDefaultExtension(L"*.*")))
+	if (FAILED(hr = fop->SetDefaultExtension(fileExts[0].pszSpec)))
 		throw WinError(L"Failed to set default file dialogue file extension", hr);
 
 	if (FAILED(hr = fop->Show(*this)))
