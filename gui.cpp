@@ -220,7 +220,7 @@ void MainWindow::loadFolder(const std::wstring& folder)
 	});
 
 	std::vector<std::wstring> imgs;
-	for (const auto& p : std::filesystem::directory_iterator(folder))
+	for (const auto& p : std::filesystem::recursive_directory_iterator(folder))
 	{
 		if (!p.is_directory())
 		{
