@@ -11,7 +11,10 @@ MainWindow::PageWindow::PageWindow(HWND parent) :
 	rt(
 		*this,
 		getParent<MainWindow>().d2dfac
-	) {}
+	)
+{
+	DragAcceptFiles(*this, TRUE);
+}
 
 LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -54,7 +57,27 @@ LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 			auto& mw = getParent<MainWindow>();
 			mw.calculateZoom();
 		}
-		return 0;	
+		return 0;
+		case WM_DROPFILES:
+		{
+			auto& mw = getParent<MainWindow>();
+			const UHandle<HDROP, DragFinish> drop(reinterpret_cast<HDROP>(wParam));
+			const unsigned count = DragQueryFileW(drop.get(), 0xFFFFFFFF, nullptr, 0);
+			std::vector<std::wstring> filenames;
+			filenames.reserve(count);
+			for (unsigned i = 0; i < count; i++)
+			{
+				const unsigned charCount = DragQueryFileW(drop.get(), i, nullptr, 0);
+				if (charCount == 0) throw WinError(L"Failed to get dropped file name size");
+				std::vector<wchar_t> buffer(charCount + 1);
+				if (DragQueryFileW(drop.get(), i, &buffer[0], buffer.size()) == 0)
+					throw WinError(L"Failed to get dropped file name");
+				filenames.emplace_back(buffer.data());
+			}
+			mw.loadPics(filenames);
+			InvalidateRect(mw, nullptr, FALSE);
+		}
+		return 0;
 	}
 	return DefWindowProcW(*this, msg, wParam, lParam);
 }
