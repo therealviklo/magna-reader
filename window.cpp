@@ -214,31 +214,90 @@ int UpDown::getValue()
 	return ret;
 }
 
-Menu::Menu(std::initializer_list<std::variant<MenuItem, SubMenu>> elements)
+Menu::Menu(std::initializer_list<MenuItemVariant> elements, HMENU* copy)
 	: menu(CreateMenu())
 {
 	if (!menu) throw WinError(L"Failed to create menu");
 
 	for (const auto& e : elements)
 	{
-		if (std::holds_alternative<MenuItem>(e))
-		{
-			if (AppendMenuW(
-				menu.get(),
-				MF_STRING,
-				std::get<MenuItem>(e).second,
-				std::get<MenuItem>(e).first.c_str()
-			) == 0) throw WinError(L"Failed to create meny item");
-		}
-		else if (std::holds_alternative<SubMenu>(e))
-		{
-			if (AppendMenuW(
-				menu.get(),
-				MF_POPUP,
-				(UINT_PTR)(HMENU)std::get<SubMenu>(e).second.menu.get(),
-				std::get<SubMenu>(e).first.c_str()
-			) == 0) throw WinError(L"Failed to create meny item");
-			(void)std::get<SubMenu>(e).second.menu.release();
-		}
+		std::visit([&](const auto& e){
+			using T = std::decay_t<decltype(e)>;
+			if constexpr (std::is_same_v<T, MenuItem::String>)
+			{
+				if (AppendMenuW(
+					menu.get(),
+					MF_STRING,
+					e.id,
+					e.text.c_str()
+				) == 0) throw WinError(L"Failed to create menu item");
+			}
+			else if constexpr (std::is_same_v<T, MenuItem::SubMenu>)
+			{
+				if (AppendMenuW(
+					menu.get(),
+					MF_POPUP,
+					(UINT_PTR)(HMENU)e.menu.menu.get(),
+					e.text.c_str()
+				) == 0) throw WinError(L"Failed to create menu item");
+				(void)e.menu.menu.release();
+			}
+			else if constexpr (std::is_same_v<T, MenuItem::Separator>)
+			{
+				if (AppendMenuW(
+					menu.get(),
+					MF_SEPARATOR,
+					0,
+					nullptr
+				) == 0) throw WinError(L"Failed to create menu item");
+			}
+			else if constexpr (std::is_same_v<T, MenuItem::CheckButton>)
+			{
+				if (AppendMenuW(
+					menu.get(),
+					MF_STRING,
+					e.id,
+					e.text.c_str()
+				) == 0) throw WinError(L"Failed to create menu item");
+
+				CheckMenuItem(
+					menu.get(),
+					e.id,
+					e.checked ? MF_CHECKED : MF_UNCHECKED
+				);
+			}
+			else if constexpr (std::is_same_v<T, MenuItem::RadioButton>)
+			{
+				if (AppendMenuW(
+					menu.get(),
+					MF_STRING,
+					e.id,
+					e.text.c_str()
+				) == 0) throw WinError(L"Failed to create menu item");
+
+				MENUITEMINFOW mii{};
+				mii.cbSize = sizeof(mii);
+				mii.fMask = MIIM_FTYPE | MIIM_STATE;
+
+				if (GetMenuItemInfoW(
+					menu.get(),
+					e.id,
+					MF_BYCOMMAND,
+					&mii
+				) == 0) throw WinError(L"Failed to get menu item info");
+
+				if (e.checked) mii.fType |= MFT_RADIOCHECK;
+				mii.fState = e.checked ? MFS_CHECKED : MFS_UNCHECKED;
+
+				if (SetMenuItemInfoW(
+					menu.get(),
+					e.id,
+					MF_BYCOMMAND,
+					&mii
+				) == 0) throw WinError(L"Failed to get menu item info");
+			}
+		}, e);
 	}
+	
+	if (copy != nullptr) *copy = menu.get();
 }

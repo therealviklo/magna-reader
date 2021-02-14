@@ -150,15 +150,51 @@ public:
 		: Control(L"Static", style, exStyle, text, parent) {}
 };
 
-typedef std::pair<std::wstring, Menu> SubMenu;
-typedef std::pair<std::wstring, UINT_PTR> MenuItem;
+namespace MenuItem
+{
+	struct SubMenu;
+	struct String
+	{
+		std::wstring text;
+		UINT_PTR id;
+	};
+	struct Separator {};
+	struct CheckButton
+	{
+		std::wstring text;
+		bool checked;
+		UINT_PTR id;
+	};
+	struct RadioButton
+	{
+		std::wstring text;
+		bool checked;
+		UINT_PTR id;
+	};
+}
+using MenuItemVariant = std::variant<
+	MenuItem::String,
+	MenuItem::SubMenu,
+	MenuItem::Separator,
+	MenuItem::CheckButton,
+	MenuItem::RadioButton
+>;
 class Menu
 {
 	friend Window;
 private:
 	mutable UHandle<HMENU, DestroyMenu> menu;
+	Menu(std::initializer_list<MenuItemVariant> elements, HMENU* copy);
 public:
-	Menu(std::initializer_list<std::variant<MenuItem, SubMenu>> elements);
+	Menu(std::initializer_list<MenuItemVariant> elements)
+		: Menu(std::move(elements), nullptr) {}
+	Menu(std::initializer_list<MenuItemVariant> elements, HMENU& copy)
+		: Menu(std::move(elements), &copy) {}
+};
+struct MenuItem::SubMenu
+{
+	std::wstring text;
+	Menu menu;
 };
 
 extern const WindowClass defWindowClass;

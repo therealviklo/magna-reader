@@ -15,7 +15,9 @@ namespace MenuId
 	enum MenuId_t : UINT_PTR
 	{
 		openFiles,
-		openFolder
+		openFolder,
+		keepPages,
+		closePages
 	};
 }
 using MenuId::MenuId_t;
@@ -36,6 +38,7 @@ private:
 		
 		LRESULT wndProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
 	} pageWindow;
+	HMENU keepPagesMenu;
 
 	std::vector<Bitmap> pics;
 	size_t pic;
@@ -48,6 +51,7 @@ private:
 		height,
 		realSize
 	} fitMode;
+	bool keepPages;
 
 	float x;
 	float y;

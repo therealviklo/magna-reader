@@ -180,9 +180,12 @@ std::optional<std::wstring> MainWindow::openFolderDialogue()
 
 void MainWindow::loadPics(const std::vector<std::wstring>& files)
 {
-	pics.clear();
-	setPic(0);
-	pics.reserve(files.size());
+	if (!keepPages)
+	{
+		pics.clear();
+		setPic(0);
+	}
+	pics.reserve(pics.size() + files.size());
 	for (const auto& i : files)
 	{
 		try
@@ -192,6 +195,7 @@ void MainWindow::loadPics(const std::vector<std::wstring>& files)
 		catch (const WinError& e)
 		{
 			pics.clear();
+			setPic(0);
 			std::wostringstream ss;
 			ss << L"Unable to open file \""
 			   << i
@@ -316,18 +320,26 @@ void MainWindow::onResize(int w, int h)
 	MoveWindow(pageWindow, 0, 0, w, h, TRUE);
 }
 
-MainWindow::MainWindow(const std::vector<std::wstring>& files) :
+MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppcoreguidelines-pro-type-member-init)
 	Window(
 		defWindowClass,
 		WS_OVERLAPPEDWINDOW,
 		WS_EX_OVERLAPPEDWINDOW,
 		L"Magna Reader",
 		Menu{
-			SubMenu{
+			MenuItem::SubMenu{
 				L"File",
 				Menu{
-					MenuItem{L"Open Files", MenuId::openFiles},
-					MenuItem{L"Open Folder", MenuId::openFolder}
+					MenuItem::String{L"Open Files...", MenuId::openFiles},
+					MenuItem::String{L"Open Folder...", MenuId::openFolder},
+					MenuItem::Separator{},
+					MenuItem::SubMenu{
+						L"When Opening Pages",
+						Menu{{
+							MenuItem::RadioButton{L"Keep Old Ones", false, MenuId::keepPages},
+							MenuItem::RadioButton{L"Close Old Ones", true, MenuId::closePages}
+						}, keepPagesMenu}
+					}
 				}
 			}
 		}
@@ -336,6 +348,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) :
 	pic(0),
 	easternReadingOrder(false),
 	fitMode(FitMode::width),
+	keepPages(false),
 	x(0.0F),
 	y(0.0F),
 	userZoom(1.0F),
@@ -498,6 +511,30 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 							loadFolder(*folder);
 							InvalidateRect(*this, nullptr, FALSE);
 						}
+					}
+					return 0;
+					case MenuId::keepPages:
+					{
+						CheckMenuRadioItem(
+							keepPagesMenu,
+							MenuId::keepPages,
+							MenuId::closePages,
+							MenuId::keepPages,
+							MF_BYCOMMAND
+						);
+						keepPages = true;
+					}
+					return 0;
+					case MenuId::closePages:
+					{
+						CheckMenuRadioItem(
+							keepPagesMenu,
+							MenuId::keepPages,
+							MenuId::closePages,
+							MenuId::closePages,
+							MF_BYCOMMAND
+						);
+						keepPages = false;
 					}
 					return 0;
 				}
