@@ -197,4 +197,68 @@ struct MenuItem::SubMenu
 	Menu menu;
 };
 
+template <class W, void (*callback)(W&) = nullptr>
+class Timer
+{
+private:
+	bool started;
+	UINT_PTR id;
+	HWND hWnd;
+	UINT msTimeout;
+
+	static void timerproc(HWND hWnd, UINT msg, UINT_PTR id, DWORD ms) noexcept
+	{
+		try
+		{
+			callback(dynamic_cast<W&>(*reinterpret_cast<Window*>(GetWindowLongPtrW(hWnd, GWLP_USERDATA))));
+		}
+		catch (...)
+		{
+			lippincott();
+			throw;
+		}
+	}
+public:
+	Timer(UINT_PTR id, HWND hWnd, UINT msTimeout) noexcept :
+		started(false),
+		id(id),
+		hWnd(hWnd),
+		msTimeout(msTimeout) {}
+	~Timer()
+	{
+		if (started) KillTimer(hWnd, id);
+	}
+
+	Timer(const Timer&) = delete;
+	Timer& operator=(const Timer&) = delete;
+
+	void start()
+	{
+		if (!started)
+		{
+			if (SetTimer(
+				hWnd,
+				id,
+				msTimeout,
+				callback != nullptr ? &timerproc : nullptr
+			) == 0) throw WinError(L"Failed to start timer");
+			started = true;
+		}
+	}
+
+	void stop()
+	{
+		if (started)
+		{
+			if (KillTimer(
+				hWnd,
+				id
+			) == FALSE) throw WinError(L"Failed to stop timer");
+			started = false;
+		}
+	}
+
+	constexpr bool isStarted() const noexcept { return started; }
+};
+
 extern const WindowClass defWindowClass;

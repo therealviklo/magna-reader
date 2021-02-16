@@ -40,8 +40,8 @@ LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				};
 				rt.drawBitmap(
 					bmp,
-					(static_cast<float>(rc.right) - zoomedSize.w) / 2.0F - mw.x,
-					-mw.y,
+					(static_cast<float>(rc.right) - zoomedSize.w) / 2.0F - mw.slidingPosition.getCurrX(),
+					-mw.slidingPosition.getCurrY(),
 					zoomedSize.w,
 					zoomedSize.h
 				);
@@ -80,6 +80,39 @@ LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 	}
 	return DefWindowProcW(*this, msg, wParam, lParam);
+}
+
+void MainWindow::SlidingPosition::callback(MainWindow& wnd)
+{
+	if (wnd.slidingPosition.timeLeft == 0U)
+	{
+		wnd.slidingPosition.timer.stop();
+	}
+	else
+	{
+		wnd.slidingPosition.x += (wnd.slidingPosition.destX - wnd.slidingPosition.x) / wnd.slidingPosition.timeLeft;
+		wnd.slidingPosition.y += (wnd.slidingPosition.destY - wnd.slidingPosition.y) / wnd.slidingPosition.timeLeft;
+		wnd.slidingPosition.timeLeft--;
+		InvalidateRect(wnd, nullptr, FALSE);
+	}
+}
+
+void MainWindow::SlidingPosition::slideTo(float x, float y)
+{
+	destX = x;
+	destY = y;
+	if (timeLeft == 0U) timeLeft = 5U;
+	timer.start();
+}
+
+void MainWindow::SlidingPosition::jumpTo(float x, float y)
+{
+	timer.stop();
+	timeLeft = 0U;
+	destX = x;
+	destY = y;
+	this->x = x;
+	this->y = y;
 }
 
 std::optional<std::vector<std::wstring>> MainWindow::openFileDialogue()
@@ -279,23 +312,28 @@ void MainWindow::centerOnImage()
 
 		const float maxY = picHeight - static_cast<float>(pwSize.bottom);
 
+		float newX = 0.0F;
+		float newY = 0.0F;
+
 		if (minX < maxX)
 		{
-			x = std::clamp<float>(x, minX, maxX);
+			newX = std::clamp<float>(slidingPosition.getX(), minX, maxX);
 		}
 		else
 		{
-			x = 0.0F;
+			newX = 0.0F;
 		}
 
 		if (0.0F < maxY)
 		{
-			y = std::clamp<float>(y, 0.0F, maxY);
+			newY = std::clamp<float>(slidingPosition.getY(), 0.0F, maxY);
 		}
 		else
 		{
-			y = 0.0F;
+			newY = 0.0F;
 		}
+
+		slidingPosition.slideTo(newX, newY);
 	}
 }
 
@@ -372,8 +410,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 	easternReadingOrder(false),
 	fitMode(FitMode::width),
 	keepPages(false),
-	x(0.0F),
-	y(0.0F),
+	slidingPosition(*this),
 	userZoom(1.0F),
 	zoom(1.0F)
 {
@@ -417,14 +454,20 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				return 0;
 				case VK_UP:
 				{
-					y -= 120.0F / 1.3F;
+					slidingPosition.slideTo(
+						slidingPosition.getX(),
+						slidingPosition.getY() - 120.0F / 1.3F
+					);
 					centerOnImage();
 					InvalidateRect(*this, nullptr, FALSE);
 				}
 				return 0;
 				case VK_DOWN:
 				{
-					y += 120.0F / 1.3F;
+					slidingPosition.slideTo(
+						slidingPosition.getX(),
+						slidingPosition.getY() + 120.0F / 1.3F
+					);
 					centerOnImage();
 					InvalidateRect(*this, nullptr, FALSE);
 				}
@@ -432,7 +475,10 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				case VK_PRIOR:
 				{
 					const RECT size = pageWindow.getSize();
-					y -= static_cast<float>(size.bottom) * 0.95F;
+					slidingPosition.slideTo(
+						slidingPosition.getX(),
+						slidingPosition.getY() - static_cast<float>(size.bottom) * 0.95F
+					);
 					centerOnImage();
 					InvalidateRect(*this, nullptr, FALSE);
 				}
@@ -440,14 +486,20 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				case VK_NEXT:
 				{
 					const RECT size = pageWindow.getSize();
-					y += static_cast<float>(size.bottom) * 0.95F;
+					slidingPosition.slideTo(
+						slidingPosition.getX(),
+						slidingPosition.getY() + static_cast<float>(size.bottom) * 0.95F
+					);
 					centerOnImage();
 					InvalidateRect(*this, nullptr, FALSE);
 				}
 				return 0;
 				case VK_HOME:
 				{
-					y = 0.0F;
+					slidingPosition.slideTo(
+						slidingPosition.getX(),
+						0.0F
+					);
 					centerOnImage();
 					InvalidateRect(*this, nullptr, FALSE);
 				}
@@ -460,11 +512,17 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 					
 					if (0.0F < maxY)
 					{
-						y = maxY;
+						slidingPosition.slideTo(
+							slidingPosition.getX(),
+							maxY
+						);
 					}
 					else
 					{
-						y = 0.0F;
+						slidingPosition.slideTo(
+							slidingPosition.getX(),
+							0.0F
+						);
 					}
 					
 					centerOnImage();
@@ -491,21 +549,31 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 
 				const float zoomFactor = std::exp(static_cast<float>(delta) / 1000.0F);
 				userZoom *= zoomFactor;
-				x = (x + mousePos.x) * zoomFactor - mousePos.x;
-				y = (y + mousePos.y + rc.bottom / 2.0F) * zoomFactor - mousePos.y - rc.bottom / 2.0F;
+				slidingPosition.jumpTo(
+					(slidingPosition.getX() + mousePos.x) * zoomFactor - mousePos.x,
+					(slidingPosition.getY() + mousePos.y + rc.bottom / 2.0F) * zoomFactor - mousePos.y - rc.bottom / 2.0F
+				);
+				centerOnImage();
+				slidingPosition.skipSlide();
 			}
 			else
 			{
-				y -= static_cast<float>(delta) / 1.3F;
+				slidingPosition.slideTo(
+					slidingPosition.getX(),
+					slidingPosition.getY() - static_cast<float>(delta) / 1.3F
+				);
+				centerOnImage();
 			}
-			centerOnImage();
 			InvalidateRect(*this, nullptr, FALSE);
 		}
 		return 0;
 		case WM_MOUSEHWHEEL:
 		{
 			const short delta = GET_WHEEL_DELTA_WPARAM(wParam);
-			x += static_cast<float>(delta) / 1.3F;
+			slidingPosition.slideTo(
+				slidingPosition.getX() + static_cast<float>(delta) / 1.3F,
+				slidingPosition.getY()
+			);
 			centerOnImage();
 			InvalidateRect(*this, nullptr, FALSE);
 		}

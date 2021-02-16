@@ -22,6 +22,15 @@ namespace MenuId
 }
 using MenuId::MenuId_t;
 
+namespace TimerId
+{
+	enum TimerId_t : UINT_PTR
+	{
+		slide = 123
+	};
+}
+using TimerId::TimerId_t;
+
 class MainWindow : public Window
 {
 private:
@@ -53,16 +62,47 @@ private:
 	} fitMode;
 	bool keepPages;
 
-	float x;
-	float y;
+	class SlidingPosition
+	{
+	private:
+		float x;
+		float y;
+		float destX;
+		float destY;
+		unsigned timeLeft;
+		
+		static void callback(MainWindow& wnd);
+		
+		Timer<MainWindow, &callback> timer;
+	public:
+		SlidingPosition(HWND hWnd) noexcept :
+			x(0.0F),
+			y(0.0F),
+			destX(0.0F),
+			destY(0.0F),
+			timeLeft(0U),
+			timer(
+				TimerId::slide,
+				hWnd,
+				1000U / 60U
+			) {}
+
+		void slideTo(float x, float y);
+		void jumpTo(float x, float y);
+		void skipSlide() { jumpTo(destX, destY); }
+
+		constexpr float getCurrX() const noexcept { return x; }
+		constexpr float getCurrY() const noexcept { return y; }
+		constexpr float getX() const noexcept { return destX; }
+		constexpr float getY() const noexcept { return destY; }
+	} slidingPosition;
 	float userZoom;
 	float zoom;
 	
 	constexpr void setPic(size_t num)
 	{
 		pic = num;
-		x = 0.0f;
-		y = 0.0f;
+		slidingPosition.jumpTo(0.0F, 0.0F);
 		userZoom = 1.0f;
 		calculateZoom();
 	}

@@ -33,7 +33,7 @@ int WINAPI wWinMain(
 
 		const auto args = std::wstring(pCmdLine).empty() ? std::vector<std::wstring>{} : getCmdLineArgs(pCmdLine);
 		MainWindow mw(args);
-		while ((bool)mw) mw.update();
+		while ((bool)mw) updateAllWindows();
 	}
 	catch (...)
 	{
