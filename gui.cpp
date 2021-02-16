@@ -101,7 +101,7 @@ void MainWindow::SlidingPosition::slideTo(float x, float y)
 {
 	destX = x;
 	destY = y;
-	if (timeLeft == 0U) timeLeft = 5U;
+	if (timeLeft == 0U) timeLeft = 10U;
 	timer.start();
 }
 
