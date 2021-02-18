@@ -402,6 +402,34 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 						}, keepPagesMenu}
 					}
 				}
+			},
+			MenuItem::SubMenu{
+				L"Settings",
+				Menu{
+					MenuItem::SubMenu{
+						L"Reading Direction",
+						Menu{
+							{
+								MenuItem::RadioButton{L"Left-to-Right", true, MenuId::ltr},
+								MenuItem::RadioButton{L"Right-to-Left", false, MenuId::rtl}
+							},
+							readingOrderMenu
+						}
+					},
+					MenuItem::SubMenu{
+						L"Fit Mode",
+						Menu{
+							{
+								MenuItem::RadioButton{L"Real Size or Width", false, MenuId::realSizeOrWidth},
+								MenuItem::RadioButton{L"Width", true, MenuId::width},
+								MenuItem::RadioButton{L"Real Size or Height", false, MenuId::realSizeOrHeight},
+								MenuItem::RadioButton{L"Height", false, MenuId::height},
+								MenuItem::RadioButton{L"Real Size", false, MenuId::realSize}
+							},
+							fitModeMenu
+						}
+					}
+				}
 			}
 		}
 	),
@@ -626,6 +654,100 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 							MF_BYCOMMAND
 						);
 						keepPages = false;
+					}
+					return 0;
+					case MenuId::ltr:
+					{
+						CheckMenuRadioItem(
+							readingOrderMenu,
+							MenuId::ltr,
+							MenuId::rtl,
+							MenuId::ltr,
+							MF_BYCOMMAND
+						);
+						easternReadingOrder = false;
+					}
+					return 0;
+					case MenuId::rtl:
+					{
+						CheckMenuRadioItem(
+							readingOrderMenu,
+							MenuId::ltr,
+							MenuId::rtl,
+							MenuId::rtl,
+							MF_BYCOMMAND
+						);
+						easternReadingOrder = true;
+					}
+					return 0;
+					case MenuId::realSizeOrWidth:
+					{
+						CheckMenuRadioItem(
+							fitModeMenu,
+							MenuId::realSizeOrWidth,
+							MenuId::realSize,
+							MenuId::realSizeOrWidth,
+							MF_BYCOMMAND
+						);
+						fitMode = FitMode::realSizeOrWidth;
+						calculateZoom();
+						InvalidateRect(*this, nullptr, FALSE);
+					}
+					return 0;
+					case MenuId::width:
+					{
+						CheckMenuRadioItem(
+							fitModeMenu,
+							MenuId::realSizeOrWidth,
+							MenuId::realSize,
+							MenuId::width,
+							MF_BYCOMMAND
+						);
+						fitMode = FitMode::width;
+						calculateZoom();
+						InvalidateRect(*this, nullptr, FALSE);
+					}
+					return 0;
+					case MenuId::realSizeOrHeight:
+					{
+						CheckMenuRadioItem(
+							fitModeMenu,
+							MenuId::realSizeOrWidth,
+							MenuId::realSize,
+							MenuId::realSizeOrHeight,
+							MF_BYCOMMAND
+						);
+						fitMode = FitMode::realSizeOrHeight;
+						calculateZoom();
+						InvalidateRect(*this, nullptr, FALSE);
+					}
+					return 0;
+					case MenuId::height:
+					{
+						CheckMenuRadioItem(
+							fitModeMenu,
+							MenuId::realSizeOrWidth,
+							MenuId::realSize,
+							MenuId::height,
+							MF_BYCOMMAND
+						);
+						fitMode = FitMode::height;
+						calculateZoom();
+						InvalidateRect(*this, nullptr, FALSE);
+					}
+					return 0;
+					case MenuId::realSize:
+					{
+						CheckMenuRadioItem(
+							fitModeMenu,
+							MenuId::realSizeOrWidth,
+							MenuId::realSize,
+							MenuId::realSize,
+							MF_BYCOMMAND
+						);
+						fitMode = FitMode::realSize;
+						calculateZoom();
+						InvalidateRect(*this, nullptr, FALSE);
 					}
 					return 0;
 				}

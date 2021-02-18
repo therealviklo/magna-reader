@@ -17,7 +17,14 @@ namespace MenuId
 		openFiles,
 		openFolder,
 		keepPages,
-		closePages
+		closePages,
+		ltr,
+		rtl,
+		realSizeOrWidth,
+		width,
+		realSizeOrHeight,
+		height,
+		realSize
 	};
 }
 using MenuId::MenuId_t;
@@ -48,6 +55,8 @@ private:
 		LRESULT wndProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
 	} pageWindow;
 	HMENU keepPagesMenu;
+	HMENU readingOrderMenu;
+	HMENU fitModeMenu;
 
 	std::vector<Bitmap> pics;
 	size_t pic;
