@@ -385,7 +385,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 	Window(
 		defWindowClass,
 		WS_OVERLAPPEDWINDOW,
-		WS_EX_OVERLAPPEDWINDOW,
+		0,
 		L"Magna Reader",
 		Menu{
 			MenuItem::SubMenu{
