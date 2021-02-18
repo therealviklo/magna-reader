@@ -93,7 +93,7 @@ private:
 			timer(
 				TimerId::slide,
 				hWnd,
-				1000U / 120U
+				USER_TIMER_MINIMUM //1000U / 120U
 			) {}
 
 		void slideTo(float x, float y);
