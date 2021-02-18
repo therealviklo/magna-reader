@@ -90,8 +90,8 @@ void MainWindow::SlidingPosition::callback(MainWindow& wnd)
 	}
 	else
 	{
-		wnd.slidingPosition.x += (wnd.slidingPosition.destX - wnd.slidingPosition.x) / wnd.slidingPosition.timeLeft;
-		wnd.slidingPosition.y += (wnd.slidingPosition.destY - wnd.slidingPosition.y) / wnd.slidingPosition.timeLeft;
+		wnd.slidingPosition.x += (wnd.slidingPosition.destX - wnd.slidingPosition.x) / static_cast<float>(wnd.slidingPosition.timeLeft);
+		wnd.slidingPosition.y += (wnd.slidingPosition.destY - wnd.slidingPosition.y) / static_cast<float>(wnd.slidingPosition.timeLeft);
 		wnd.slidingPosition.timeLeft--;
 		InvalidateRect(wnd, nullptr, FALSE);
 	}
