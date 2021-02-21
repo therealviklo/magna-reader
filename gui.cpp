@@ -193,7 +193,7 @@ std::optional<std::vector<std::wstring>> MainWindow::openFileDialogue()
 	return files;
 }
 
-std::optional<std::wstring> MainWindow::openFolderDialogue()
+std::optional<std::vector<std::wstring>> MainWindow::openFolderDialogue()
 {
 	HRESULT hr = 0;
 	
@@ -210,7 +210,7 @@ std::optional<std::wstring> MainWindow::openFolderDialogue()
 	if (FAILED(hr = fop->GetOptions(&flags)))
 		throw WinError(L"Failed to get folder dialogue options", hr);
 
-	if (FAILED(hr = fop->SetOptions(flags | FOS_FORCEFILESYSTEM | FOS_PICKFOLDERS)))
+	if (FAILED(hr = fop->SetOptions(flags | FOS_FORCEFILESYSTEM | FOS_PICKFOLDERS | FOS_ALLOWMULTISELECT)))
 		throw WinError(L"Failed to set folder dialogue options", hr);
 
 	if (FAILED(hr = fop->Show(*this)))
@@ -220,18 +220,33 @@ std::optional<std::wstring> MainWindow::openFolderDialogue()
 		throw WinError(L"Failed to show folder dialogue", hr);
 	}
 
-	ComPtr<IShellItem> si;
-	if (FAILED(hr = fop->GetResult(&si)))
-		throw WinError(L"Failed to get folder dialogue result", hr);
+	ComPtr<IShellItemArray> sia;
+	if (FAILED(hr = fop->GetResults(&sia)))
+		throw WinError(L"Failed to get folder dialogue results", hr);
+	
+	DWORD fileCount = 0;
+	if (FAILED(hr = sia->GetCount(&fileCount)))
+		throw WinError(L"Failed to get selected folder count", hr);
 
-	wchar_t* tmpFilename = nullptr;
-	if (FAILED(hr = si->GetDisplayName(
-		SIGDN_FILESYSPATH,
-		&tmpFilename
-	)))	throw WinError(L"Failed to get selected folder", hr);
-	const UHandle<wchar_t*, CoTaskMemFree> filename(tmpFilename);
+	std::optional<std::vector<std::wstring>> folders(std::in_place);
+	folders->reserve(fileCount);
+	for (DWORD i = 0; i < fileCount; i++)
+	{
+		ComPtr<IShellItem> si;
+		if (FAILED(hr = sia->GetItemAt(i, &si)))
+			throw WinError(L"Failed to get selected folder", hr);
 
-	return std::optional<std::wstring>(std::in_place, filename.get());
+		wchar_t* tmpFilename = nullptr;
+		if (FAILED(hr = si->GetDisplayName(
+			SIGDN_FILESYSPATH,
+			&tmpFilename
+		)))	throw WinError(L"Failed to get selected folder", hr);
+		const UHandle<wchar_t*, CoTaskMemFree> filename(tmpFilename);
+
+		folders->emplace_back(filename.get());
+	}
+
+	return folders;
 }
 
 void MainWindow::loadPics(const std::vector<std::wstring>& files)
@@ -265,7 +280,7 @@ void MainWindow::loadPics(const std::vector<std::wstring>& files)
 	setPic(0);
 }
 
-void MainWindow::loadFolder(const std::wstring& folder)
+void MainWindow::loadFolders(const std::vector<std::wstring>& folders)
 {
 	constexpr auto validFileExts = std::to_array<const wchar_t*>({
 		L".bmp",
@@ -280,17 +295,20 @@ void MainWindow::loadFolder(const std::wstring& folder)
 	});
 
 	std::vector<std::wstring> imgs;
-	for (const auto& p : std::filesystem::recursive_directory_iterator(folder))
+	for (const auto& f : folders)
 	{
-		if (!p.is_directory())
+		for (const auto& p : std::filesystem::recursive_directory_iterator(f))
 		{
-			const std::wstring ext = p.path().extension();
-			for (const auto& vfe : validFileExts)
+			if (!p.is_directory())
 			{
-				if (ext == vfe)
+				const std::wstring ext = p.path().extension();
+				for (const auto& vfe : validFileExts)
 				{
-					imgs.emplace_back(p.path());
-					break;
+					if (ext == vfe)
+					{
+						imgs.emplace_back(p.path());
+						break;
+					}
 				}
 			}
 		}
@@ -392,7 +410,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 				L"File",
 				Menu{
 					MenuItem::String{L"Open Files...", MenuId::openFiles},
-					MenuItem::String{L"Open Folder...", MenuId::openFolder},
+					MenuItem::String{L"Open Folders...", MenuId::openFolder},
 					MenuItem::Separator{},
 					MenuItem::SubMenu{
 						L"When Opening Pages",
@@ -627,7 +645,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 						const auto folder = openFolderDialogue();
 						if (folder)
 						{
-							loadFolder(*folder);
+							loadFolders(*folder);
 							InvalidateRect(*this, nullptr, FALSE);
 						}
 					}

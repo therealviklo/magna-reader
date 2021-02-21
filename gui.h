@@ -117,9 +117,9 @@ private:
 	}
 
 	std::optional<std::vector<std::wstring>> openFileDialogue();
-	std::optional<std::wstring> openFolderDialogue();
+	std::optional<std::vector<std::wstring>> openFolderDialogue();
 	void loadPics(const std::vector<std::wstring>& files);
-	void loadFolder(const std::wstring& folder);
+	void loadFolders(const std::vector<std::wstring>& folders);
 
 	void centerOnImage();
 	void calculateZoom();
