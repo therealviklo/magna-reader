@@ -9,6 +9,7 @@
 #include "d2d.h"
 #include "windowsx.h"
 #include <shobjidl_core.h>
+#include "settings.h"
 
 namespace MenuId
 {
@@ -61,14 +62,7 @@ private:
 	std::vector<Bitmap> pics;
 	size_t pic;
 
-	bool easternReadingOrder;
-	enum struct FitMode {
-		realSizeOrWidth,
-		width,
-		realSizeOrHeight,
-		height,
-		realSize
-	} fitMode;
+	AutoSaveSettings<0> ass;
 	bool keepPages;
 
 	class SlidingPosition

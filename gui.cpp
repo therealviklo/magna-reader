@@ -359,7 +359,7 @@ void MainWindow::calculateZoom()
 {
 	if (!pics.empty())
 	{
-		switch (fitMode)
+		switch (ass->fitMode)
 		{
 			case FitMode::realSizeOrWidth:
 			{
@@ -453,8 +453,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 	),
 	pageWindow(*this),
 	pic(0),
-	easternReadingOrder(false),
-	fitMode(FitMode::width),
+	ass(L"settings.cfg"),
 	keepPages(false),
 	slidingPosition(*this),
 	userZoom(1.0F),
@@ -482,7 +481,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 			{
 				case VK_LEFT:
 				{
-					if (easternReadingOrder)
+					if (ass->easternReadingOrder)
 						nextPic();
 					else
 						prevPic();
@@ -491,7 +490,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				return 0;
 				case VK_RIGHT:
 				{
-					if (easternReadingOrder)
+					if (ass->easternReadingOrder)
 						prevPic();
 					else
 						nextPic();
@@ -683,7 +682,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 							MenuId::ltr,
 							MF_BYCOMMAND
 						);
-						easternReadingOrder = false;
+						ass.set(&Settings<0>::easternReadingOrder, false);
 					}
 					return 0;
 					case MenuId::rtl:
@@ -695,7 +694,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 							MenuId::rtl,
 							MF_BYCOMMAND
 						);
-						easternReadingOrder = true;
+						ass.set(&Settings<0>::easternReadingOrder, true);
 					}
 					return 0;
 					case MenuId::realSizeOrWidth:
@@ -707,7 +706,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 							MenuId::realSizeOrWidth,
 							MF_BYCOMMAND
 						);
-						fitMode = FitMode::realSizeOrWidth;
+						ass.set(&Settings<0>::fitMode, FitMode::realSizeOrWidth);
 						calculateZoom();
 						InvalidateRect(*this, nullptr, FALSE);
 					}
@@ -721,7 +720,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 							MenuId::width,
 							MF_BYCOMMAND
 						);
-						fitMode = FitMode::width;
+						ass.set(&Settings<0>::fitMode, FitMode::width);
 						calculateZoom();
 						InvalidateRect(*this, nullptr, FALSE);
 					}
@@ -735,7 +734,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 							MenuId::realSizeOrHeight,
 							MF_BYCOMMAND
 						);
-						fitMode = FitMode::realSizeOrHeight;
+						ass.set(&Settings<0>::fitMode, FitMode::realSizeOrHeight);
 						calculateZoom();
 						InvalidateRect(*this, nullptr, FALSE);
 					}
@@ -749,7 +748,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 							MenuId::height,
 							MF_BYCOMMAND
 						);
-						fitMode = FitMode::height;
+						ass.set(&Settings<0>::fitMode, FitMode::height);
 						calculateZoom();
 						InvalidateRect(*this, nullptr, FALSE);
 					}
@@ -763,7 +762,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 							MenuId::realSize,
 							MF_BYCOMMAND
 						);
-						fitMode = FitMode::realSize;
+						ass.set(&Settings<0>::fitMode, FitMode::realSize);
 						calculateZoom();
 						InvalidateRect(*this, nullptr, FALSE);
 					}
