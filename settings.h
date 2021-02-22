@@ -98,7 +98,7 @@ public:
 	
 	constexpr const Settings<ver>* operator->() const noexcept { return &us; }
 	template <typename T>
-	constexpr void set(T Settings<ver>::* m, const T& v)
+	constexpr void set(T Settings<ver>::* m, const T& v) noexcept
 	{
 		us.*m = v;
 		saveSettings(us, filename.c_str());

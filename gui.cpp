@@ -251,7 +251,7 @@ std::optional<std::vector<std::wstring>> MainWindow::openFolderDialogue()
 
 void MainWindow::loadPics(const std::vector<std::wstring>& files)
 {
-	if (!keepPages)
+	if (doNotKeepPages)
 	{
 		pics.clear();
 		setPic(0);
@@ -414,10 +414,13 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 					MenuItem::Separator{},
 					MenuItem::SubMenu{
 						L"When Opening Pages",
-						Menu{{
-							MenuItem::RadioButton{L"Keep Old Ones", false, MenuId::keepPages},
-							MenuItem::RadioButton{L"Close Old Ones", true, MenuId::closePages}
-						}, keepPagesMenu}
+						Menu{
+							{
+								MenuItem::RadioButton{L"Keep Old Ones", false, MenuId::keepPages},
+								MenuItem::RadioButton{L"Close Old Ones", true, MenuId::closePages}
+							},
+							keepPagesMenu.handle
+						}
 					}
 				}
 			},
@@ -431,7 +434,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 								MenuItem::RadioButton{L"Left-to-Right", true, MenuId::ltr},
 								MenuItem::RadioButton{L"Right-to-Left", false, MenuId::rtl}
 							},
-							readingOrderMenu
+							readingOrderMenu.handle
 						}
 					},
 					MenuItem::SubMenu{
@@ -444,7 +447,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 								MenuItem::RadioButton{L"Height", false, MenuId::height},
 								MenuItem::RadioButton{L"Real Size", false, MenuId::realSize}
 							},
-							fitModeMenu
+							fitModeMenu.handle
 						}
 					}
 				}
@@ -454,13 +457,17 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 	pageWindow(*this),
 	pic(0),
 	ass(L"settings.cfg"),
-	keepPages(false),
+	doNotKeepPages(true),
 	slidingPosition(*this),
 	userZoom(1.0F),
 	zoom(1.0F)
 {
 	const RECT rc = getSize();
 	onResize(rc.right, rc.bottom);
+
+	keepPagesMenu.sync(doNotKeepPages);
+	readingOrderMenu.sync(ass->easternReadingOrder);
+	fitModeMenu.sync(ass->fitMode);
 
 	loadPics(files);
 }
@@ -651,118 +658,55 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 					return 0;
 					case MenuId::keepPages:
 					{
-						CheckMenuRadioItem(
-							keepPagesMenu,
-							MenuId::keepPages,
-							MenuId::closePages,
-							MenuId::keepPages,
-							MF_BYCOMMAND
-						);
-						keepPages = true;
+						keepPagesMenu.set(false, doNotKeepPages);
 					}
 					return 0;
 					case MenuId::closePages:
 					{
-						CheckMenuRadioItem(
-							keepPagesMenu,
-							MenuId::keepPages,
-							MenuId::closePages,
-							MenuId::closePages,
-							MF_BYCOMMAND
-						);
-						keepPages = false;
+						keepPagesMenu.set(true, doNotKeepPages);
 					}
 					return 0;
 					case MenuId::ltr:
 					{
-						CheckMenuRadioItem(
-							readingOrderMenu,
-							MenuId::ltr,
-							MenuId::rtl,
-							MenuId::ltr,
-							MF_BYCOMMAND
-						);
-						ass.set(&Settings<0>::easternReadingOrder, false);
+						readingOrderMenu.set(false, &CS::easternReadingOrder, ass);
 					}
 					return 0;
 					case MenuId::rtl:
 					{
-						CheckMenuRadioItem(
-							readingOrderMenu,
-							MenuId::ltr,
-							MenuId::rtl,
-							MenuId::rtl,
-							MF_BYCOMMAND
-						);
-						ass.set(&Settings<0>::easternReadingOrder, true);
+						readingOrderMenu.set(true, &CS::easternReadingOrder, ass);
 					}
 					return 0;
 					case MenuId::realSizeOrWidth:
 					{
-						CheckMenuRadioItem(
-							fitModeMenu,
-							MenuId::realSizeOrWidth,
-							MenuId::realSize,
-							MenuId::realSizeOrWidth,
-							MF_BYCOMMAND
-						);
-						ass.set(&Settings<0>::fitMode, FitMode::realSizeOrWidth);
+						fitModeMenu.set(FitMode::realSizeOrWidth, &CS::fitMode, ass);
 						calculateZoom();
 						InvalidateRect(*this, nullptr, FALSE);
 					}
 					return 0;
 					case MenuId::width:
 					{
-						CheckMenuRadioItem(
-							fitModeMenu,
-							MenuId::realSizeOrWidth,
-							MenuId::realSize,
-							MenuId::width,
-							MF_BYCOMMAND
-						);
-						ass.set(&Settings<0>::fitMode, FitMode::width);
+						fitModeMenu.set(FitMode::width, &CS::fitMode, ass);
 						calculateZoom();
 						InvalidateRect(*this, nullptr, FALSE);
 					}
 					return 0;
 					case MenuId::realSizeOrHeight:
 					{
-						CheckMenuRadioItem(
-							fitModeMenu,
-							MenuId::realSizeOrWidth,
-							MenuId::realSize,
-							MenuId::realSizeOrHeight,
-							MF_BYCOMMAND
-						);
-						ass.set(&Settings<0>::fitMode, FitMode::realSizeOrHeight);
+						fitModeMenu.set(FitMode::realSizeOrHeight, &CS::fitMode, ass);
 						calculateZoom();
 						InvalidateRect(*this, nullptr, FALSE);
 					}
 					return 0;
 					case MenuId::height:
 					{
-						CheckMenuRadioItem(
-							fitModeMenu,
-							MenuId::realSizeOrWidth,
-							MenuId::realSize,
-							MenuId::height,
-							MF_BYCOMMAND
-						);
-						ass.set(&Settings<0>::fitMode, FitMode::height);
+						fitModeMenu.set(FitMode::height, &CS::fitMode, ass);
 						calculateZoom();
 						InvalidateRect(*this, nullptr, FALSE);
 					}
 					return 0;
 					case MenuId::realSize:
 					{
-						CheckMenuRadioItem(
-							fitModeMenu,
-							MenuId::realSizeOrWidth,
-							MenuId::realSize,
-							MenuId::realSize,
-							MF_BYCOMMAND
-						);
-						ass.set(&Settings<0>::fitMode, FitMode::realSize);
+						fitModeMenu.set(FitMode::realSize, &CS::fitMode, ass);
 						calculateZoom();
 						InvalidateRect(*this, nullptr, FALSE);
 					}

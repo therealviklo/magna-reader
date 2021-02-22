@@ -10,6 +10,7 @@
 #include "windowsx.h"
 #include <shobjidl_core.h>
 #include "settings.h"
+#include "menuhelp.h"
 
 namespace MenuId
 {
@@ -42,6 +43,10 @@ using TimerId::TimerId_t;
 class MainWindow : public Window
 {
 private:
+	static constexpr size_t CurrSettingsVer = 0;
+	using CASS = AutoSaveSettings<CurrSettingsVer>;
+	using CS = Settings<CurrSettingsVer>;
+
 	D2DFactory d2dfac;
 	WICFactory wicfac;
 
@@ -55,15 +60,15 @@ private:
 		
 		LRESULT wndProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
 	} pageWindow;
-	HMENU keepPagesMenu;
-	HMENU readingOrderMenu;
-	HMENU fitModeMenu;
+	MenuRange<MenuId::keepPages, MenuId::closePages, bool> keepPagesMenu;
+	MenuRange<MenuId::ltr, MenuId::rtl, bool> readingOrderMenu;
+	MenuRange<MenuId::realSizeOrWidth, MenuId::realSize, FitMode> fitModeMenu;
 
 	std::vector<Bitmap> pics;
 	size_t pic;
 
-	AutoSaveSettings<0> ass;
-	bool keepPages;
+	CASS ass;
+	bool doNotKeepPages;
 
 	class SlidingPosition
 	{
