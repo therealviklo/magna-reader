@@ -43,10 +43,12 @@ struct Settings<0>
 {
 	bool easternReadingOrder;
 	FitMode fitMode;
+	float autoReadSpeed;
 
 	Settings() noexcept :
 		easternReadingOrder(false),
-		fitMode(FitMode::width) {}
+		fitMode(FitMode::width),
+		autoReadSpeed(2.0F) {}
 };
 
 template <size_t ver>

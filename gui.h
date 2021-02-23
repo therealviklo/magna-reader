@@ -18,15 +18,21 @@ namespace MenuId
 	{
 		openFiles,
 		openFolder,
+
 		keepPages,
 		closePages,
+		
 		ltr,
 		rtl,
+		
 		realSizeOrWidth,
 		width,
 		realSizeOrHeight,
 		height,
-		realSize
+		realSize,
+		
+		startAutoRead,
+		stopAutoRead
 	};
 }
 using MenuId::MenuId_t;
@@ -78,6 +84,7 @@ private:
 		float destX;
 		float destY;
 		unsigned timeLeft;
+		std::optional<float> autoReadPos;
 		
 		static void callback(MainWindow& wnd);
 		
@@ -98,14 +105,30 @@ private:
 		void slideTo(float x, float y);
 		void jumpTo(float x, float y);
 		void skipSlide() { jumpTo(destX, destY); }
+		void startAutoReadAt(float pos = 0.0F);
 
 		constexpr float getCurrX() const noexcept { return x; }
 		constexpr float getCurrY() const noexcept { return y; }
 		constexpr float getX() const noexcept { return destX; }
 		constexpr float getY() const noexcept { return destY; }
+
+		constexpr bool isAutoReading() const noexcept { return autoReadPos.has_value(); }
 	} slidingPosition;
 	float userZoom;
 	float zoom;
+
+	void autoRead();
+	void toggleAutoRead()
+	{
+		if (slidingPosition.isAutoReading())
+		{
+			slidingPosition.skipSlide();
+		}
+		else
+		{
+			autoRead();
+		}
+	}
 	
 	constexpr void setPic(size_t num)
 	{

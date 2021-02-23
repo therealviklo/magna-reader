@@ -84,15 +84,50 @@ LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 
 void MainWindow::SlidingPosition::callback(MainWindow& wnd)
 {
-	if (wnd.slidingPosition.timeLeft == 0U)
+	auto& wsp = wnd.slidingPosition;
+	if (wsp.timeLeft == 0U)
 	{
-		wnd.slidingPosition.timer.stop();
+		if (wsp.autoReadPos)
+		{
+			if (wnd.pic >= wnd.pics.size())
+			{
+				wsp.autoReadPos.reset();
+				wsp.timer.stop();
+			}
+			else
+			{
+				*wsp.autoReadPos += wnd.ass->autoReadSpeed;
+				const auto size = wnd.pageWindow.getSize();
+				const auto& bmp = wnd.pics.at(wnd.pic);
+				const float zoomedHeight = float(bmp.getHeight()) * wnd.zoom * wnd.userZoom;
+				if (zoomedHeight > float(size.bottom))
+				{
+					wsp.y = std::clamp<float>(
+						*wsp.autoReadPos,
+						float(size.bottom) / 2.0F,
+						zoomedHeight - float(size.bottom) / 2.0F
+					) - float(size.bottom) / 2.0F;
+					wsp.destY = wsp.y;
+				}
+				if (*wsp.autoReadPos > zoomedHeight)
+				{
+					wnd.nextPic();
+					wsp.startAutoReadAt(0.0F);
+				}
+				InvalidateRect(wnd, nullptr, FALSE);
+			}
+		}
+		else
+		{
+			wsp.timer.stop();
+		}
 	}
 	else
 	{
-		wnd.slidingPosition.x += (wnd.slidingPosition.destX - wnd.slidingPosition.x) / static_cast<float>(wnd.slidingPosition.timeLeft);
-		wnd.slidingPosition.y += (wnd.slidingPosition.destY - wnd.slidingPosition.y) / static_cast<float>(wnd.slidingPosition.timeLeft);
-		wnd.slidingPosition.timeLeft--;
+		wsp.autoReadPos.reset();
+		wsp.x += (wsp.destX - wsp.x) / static_cast<float>(wsp.timeLeft);
+		wsp.y += (wsp.destY - wsp.y) / static_cast<float>(wsp.timeLeft);
+		wsp.timeLeft--;
 		InvalidateRect(wnd, nullptr, FALSE);
 	}
 }
@@ -108,11 +143,28 @@ void MainWindow::SlidingPosition::slideTo(float x, float y)
 void MainWindow::SlidingPosition::jumpTo(float x, float y)
 {
 	timer.stop();
+	autoReadPos.reset();
 	timeLeft = 0U;
 	destX = x;
 	destY = y;
 	this->x = x;
 	this->y = y;
+}
+
+void MainWindow::SlidingPosition::startAutoReadAt(float pos)
+{
+	autoReadPos.emplace(pos);
+	timer.start();
+}
+
+void MainWindow::autoRead()
+{
+	const auto size = pageWindow.getSize();
+	slidingPosition.startAutoReadAt(
+		slidingPosition.getY() == 0.0F ?
+		0.0F :
+		slidingPosition.getY() + float(size.bottom) / 2.0F
+	);
 }
 
 std::optional<std::vector<std::wstring>> MainWindow::openFileDialogue()
@@ -451,6 +503,13 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 						}
 					}
 				}
+			},
+			MenuItem::SubMenu{
+				L"Autoread",
+				Menu{
+					MenuItem::String{L"Start Autoread", MenuId::startAutoRead},
+					MenuItem::String{L"Stop Autoread", MenuId::stopAutoRead}
+				}
 			}
 		}
 	),
@@ -581,6 +640,11 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 					InvalidateRect(*this, nullptr, FALSE);
 				}
 				return 0;
+				case VK_SPACE:
+				{
+					toggleAutoRead();
+				}
+				return 0;
 			}
 		}
 		break;
@@ -656,6 +720,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 						}
 					}
 					return 0;
+
 					case MenuId::keepPages:
 					{
 						keepPagesMenu.set(false, doNotKeepPages);
@@ -666,6 +731,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 						keepPagesMenu.set(true, doNotKeepPages);
 					}
 					return 0;
+
 					case MenuId::ltr:
 					{
 						readingOrderMenu.set(false, &CS::easternReadingOrder, ass);
@@ -676,6 +742,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 						readingOrderMenu.set(true, &CS::easternReadingOrder, ass);
 					}
 					return 0;
+
 					case MenuId::realSizeOrWidth:
 					{
 						fitModeMenu.set(FitMode::realSizeOrWidth, &CS::fitMode, ass);
@@ -709,6 +776,17 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 						fitModeMenu.set(FitMode::realSize, &CS::fitMode, ass);
 						calculateZoom();
 						InvalidateRect(*this, nullptr, FALSE);
+					}
+					return 0;
+
+					case MenuId::startAutoRead:
+					{
+						autoRead();
+					}
+					return 0;
+					case MenuId::stopAutoRead:
+					{
+						slidingPosition.skipSlide();
 					}
 					return 0;
 				}

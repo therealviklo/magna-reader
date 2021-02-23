@@ -259,6 +259,8 @@ public:
 	}
 
 	constexpr bool isStarted() const noexcept { return started; }
+
+	constexpr HWND getHwnd() const noexcept { return hWnd; }
 };
 
 extern const WindowClass defWindowClass;
