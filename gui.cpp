@@ -509,7 +509,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 				Menu{
 					MenuItem::String{L"Start Autoread", MenuId::startAutoRead},
 					MenuItem::String{L"Stop Autoread", MenuId::stopAutoRead},
-					MenuItem::String{L"Set Speed", MenuId::setAutoReadSpeed}
+					MenuItem::String{L"Set Speed...", MenuId::setAutoReadSpeed}
 				}
 			}
 		}
@@ -797,15 +797,16 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 							enum SpeedDlgId_t : WORD
 							{
 								label = 101,
-								entryBox
+								entryBox,
+								button
 							};
 						};
 
 						const DialogueBox db{
 							{
 								WS_CAPTION | WS_POPUPWINDOW | DS_CENTER,
-								200,
 								100,
+								5 + (14 / 2 + 2) * 2 + 2 + 14 / 2 + 2 + 5,
 								L"Set Speed"
 							},
 							{
@@ -820,10 +821,10 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 									L"Speed"
 								},
 								{
-									WS_CHILD | WS_VISIBLE | WS_BORDER,
+									WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP,
 									10,
 									5 + 14 / 2 + 2,
-									100 - 10,
+									100 - 10 - 10,
 									14 / 2 + 2,
 									SpeedDlgId::entryBox,
 									DlgItemClass::edit,
@@ -833,9 +834,19 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 										   << ass->autoReadSpeed;
 										return ss.str();
 									}()
+								},
+								{
+									WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | WS_TABSTOP,
+									100 - 10 - 20,
+									5 + (14 / 2 + 2) * 2 + 2,
+									20,
+									14 / 2 + 2,
+									SpeedDlgId::button,
+									DlgItemClass::button,
+									L"OK"
 								}
 							},
-							[](HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) -> INT_PTR {
+							[](HWND hDlg, UINT msg, WPARAM wParam, LPARAM /*lParam*/) -> INT_PTR {
 								static UHandle<HFONT, &DeleteObject> font(CreateFontW(
 									-12,
 									0,
@@ -856,20 +867,51 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 								{
 									case WM_INITDIALOG:
 									{
-										SendMessageW(
-											GetDlgItem(hDlg, SpeedDlgId::label),
-											WM_SETFONT,
-											WPARAM(font.get()),
-											TRUE
-										);
-										SendMessageW(
-											GetDlgItem(hDlg, SpeedDlgId::entryBox),
-											WM_SETFONT,
-											WPARAM(font.get()),
-											TRUE
-										);
+										auto setFont = [&](int item){
+											SendMessageW(
+												GetDlgItem(hDlg, item),
+												WM_SETFONT,
+												WPARAM(font.get()),
+												TRUE
+											);
+										};
+										setFont(SpeedDlgId::label);
+										setFont(SpeedDlgId::entryBox);
+										setFont(SpeedDlgId::button);
 									}
 									return TRUE;
+									case WM_COMMAND:
+									{
+										switch (LOWORD(wParam))
+										{
+											case SpeedDlgId::button:
+											{
+												wchar_t buf[std::numeric_limits<decltype(ass->autoReadSpeed)>::digits10 + 1];
+												if (GetDlgItemTextW(
+													hDlg,
+													SpeedDlgId::entryBox,
+													buf,
+													sizeof(buf) / sizeof(*buf)
+												) != 0)
+												{
+													try
+													{
+														float newSpeed = std::wcstof(buf, nullptr);
+														if (newSpeed > 0.0F && !std::isinf(newSpeed) && !std::isnan(newSpeed))
+														{
+															float* ret = new float(newSpeed);
+															EndDialog(hDlg, (INT_PTR)ret);
+															return TRUE;
+														}
+													}
+													catch (...) {}
+												}
+												EndDialog(hDlg, 0);
+											}
+											return TRUE;
+										}
+									}
+									break;
 									case WM_CLOSE:
 									{
 										EndDialog(hDlg, 0);
@@ -879,12 +921,12 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 								return FALSE;
 							}
 						};
-						MessageBoxW(
-							*this,
-							std::to_wstring(displayDialogueBox(db, *this)).c_str(),
-							L"return",
-							0
-						);
+
+						std::unique_ptr<float> ret((float*)displayDialogueBox(db, *this));
+						if (ret)
+						{
+							ass.set(&CS::autoReadSpeed, *ret);
+						}
 					}
 					return 0;
 				}

@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <memory>
 #include <concepts>
+#include <cmath>
 #include "win.h"
 #include "werror.h"
 

@@ -1,5 +1,16 @@
 #include "dialogue.h"
 
+namespace
+{
+	template <typename T = uint16_t>
+	T& getBuf(std::byte*& cp, size_t num = 1)
+	{
+		T& t = (T&)*cp;
+		cp += sizeof(T) * num;
+		return t;
+	}
+}
+
 INT_PTR displayDialogueBox(const DialogueBox& db, HWND hWnd)
 {
 	auto alignSizeWord = [](size_t& i) -> void {
@@ -40,7 +51,7 @@ INT_PTR displayDialogueBox(const DialogueBox& db, HWND hWnd)
 	std::unique_ptr<std::byte[]> dbt = std::make_unique<std::byte[]>(totalSize);
 	std::byte* cp = dbt.get(); // Current Position
 
-	DLGTEMPLATE& dbd = (DLGTEMPLATE&)*cp;
+	auto& dbd = getBuf<DLGTEMPLATE>(cp);
 	dbd.style = db.db.style;
 	dbd.dwExtendedStyle = 0;
 	dbd.cdit = db.dbis.size();
@@ -49,31 +60,26 @@ INT_PTR displayDialogueBox(const DialogueBox& db, HWND hWnd)
 	dbd.cx = db.db.w;
 	dbd.cy = db.db.h;
 
-	cp += sizeof(DLGTEMPLATE);
 	alignPtrWord(cp);
 
-	uint16_t& menu = (uint16_t&)*cp;
+	auto& menu = getBuf(cp);
 	menu = 0;
 
-	cp += sizeof(uint16_t);
 	alignPtrWord(cp);
 
-	uint16_t& wndClass = (uint16_t&)*cp;
+	auto& wndClass = getBuf(cp);
 	wndClass = 0;
 
-	cp += sizeof(uint16_t);
 	alignPtrWord(cp);
 
-	wchar_t* dlgTitle = (wchar_t*)cp;
+	auto* dlgTitle = &getBuf<wchar_t>(cp, db.db.title.size() + 1);
 	for (const wchar_t* i = db.db.title.c_str(); (*dlgTitle++ = *i++); );
-
-	cp += (db.db.title.size() + 1) * sizeof(wchar_t);
 
 	for (const auto& i : db.dbis)
 	{
 		alignPtrDWord(cp);
 
-		DLGITEMTEMPLATE& dbid = (DLGITEMTEMPLATE&)*cp;
+		auto& dbid = getBuf<DLGITEMTEMPLATE>(cp);
 		dbid.style = i.style;
 		dbid.dwExtendedStyle = 0;
 		dbid.x = i.x;
@@ -82,23 +88,20 @@ INT_PTR displayDialogueBox(const DialogueBox& db, HWND hWnd)
 		dbid.cy = i.h;
 		dbid.id = i.id;
 
-		cp += sizeof(DLGITEMTEMPLATE);
 		alignPtrWord(cp);
 
-		uint16_t* wndClassArray = (uint16_t*)cp;
+		auto* wndClassArray = &getBuf(cp, 2);
 		wndClassArray[0] = 0xFFFF;
 		wndClassArray[1] = i.wndClass;
 
-		cp += sizeof(uint16_t) * 2;
 		alignPtrWord(cp);
 
-		wchar_t* dlgItemTitle = (wchar_t*)cp;
+		auto* dlgItemTitle = &getBuf<wchar_t>(cp, i.title.size() + 1);
 		for (const wchar_t* j = i.title.c_str(); (*dlgItemTitle++ = *j++); );
 
-		cp += (i.title.size() + 1) * sizeof(wchar_t);
 		alignPtrWord(cp);
 
-		uint16_t& creationDataSize = (uint16_t&)*cp;
+		auto& creationDataSize = getBuf(cp);
 		creationDataSize = 0;
 	}
 
