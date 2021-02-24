@@ -5,12 +5,14 @@
 #include <optional>
 #include <array>
 #include <filesystem>
+#include <sstream>
 #include "window.h"
 #include "d2d.h"
 #include "windowsx.h"
 #include <shobjidl_core.h>
 #include "settings.h"
 #include "menuhelp.h"
+#include "dialogue.h"
 
 namespace MenuId
 {
@@ -32,7 +34,8 @@ namespace MenuId
 		realSize,
 		
 		startAutoRead,
-		stopAutoRead
+		stopAutoRead,
+		setAutoReadSpeed
 	};
 }
 using MenuId::MenuId_t;

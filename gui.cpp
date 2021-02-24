@@ -508,7 +508,8 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 				L"Autoread",
 				Menu{
 					MenuItem::String{L"Start Autoread", MenuId::startAutoRead},
-					MenuItem::String{L"Stop Autoread", MenuId::stopAutoRead}
+					MenuItem::String{L"Stop Autoread", MenuId::stopAutoRead},
+					MenuItem::String{L"Set Speed", MenuId::setAutoReadSpeed}
 				}
 			}
 		}
@@ -787,6 +788,103 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 					case MenuId::stopAutoRead:
 					{
 						slidingPosition.skipSlide();
+					}
+					return 0;
+					case MenuId::setAutoReadSpeed:
+					{
+						struct SpeedDlgId // Istället för namespace
+						{
+							enum SpeedDlgId_t : WORD
+							{
+								label = 101,
+								entryBox
+							};
+						};
+
+						const DialogueBox db{
+							{
+								WS_CAPTION | WS_POPUPWINDOW | DS_CENTER,
+								200,
+								100,
+								L"Set Speed"
+							},
+							{
+								{
+									WS_CHILD | WS_VISIBLE | SS_LEFT,
+									10,
+									5,
+									50,
+									14 / 2 + 2,
+									SpeedDlgId::label,
+									DlgItemClass::label,
+									L"Speed"
+								},
+								{
+									WS_CHILD | WS_VISIBLE | WS_BORDER,
+									10,
+									5 + 14 / 2 + 2,
+									100 - 10,
+									14 / 2 + 2,
+									SpeedDlgId::entryBox,
+									DlgItemClass::edit,
+									[&](){
+										std::wostringstream ss;
+										ss << std::setprecision(std::numeric_limits<decltype(ass->autoReadSpeed)>::digits10 + 1)
+										   << ass->autoReadSpeed;
+										return ss.str();
+									}()
+								}
+							},
+							[](HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) -> INT_PTR {
+								static UHandle<HFONT, &DeleteObject> font(CreateFontW(
+									-12,
+									0,
+									0,
+									0,
+									FW_DONTCARE,
+									FALSE,
+									FALSE,
+									FALSE,
+									ANSI_CHARSET,
+									OUT_DEFAULT_PRECIS,
+									CLIP_DEFAULT_PRECIS,
+									DEFAULT_QUALITY,
+									DEFAULT_PITCH | FF_DONTCARE,
+									L"Calibri"
+								));
+								switch (msg)
+								{
+									case WM_INITDIALOG:
+									{
+										SendMessageW(
+											GetDlgItem(hDlg, SpeedDlgId::label),
+											WM_SETFONT,
+											WPARAM(font.get()),
+											TRUE
+										);
+										SendMessageW(
+											GetDlgItem(hDlg, SpeedDlgId::entryBox),
+											WM_SETFONT,
+											WPARAM(font.get()),
+											TRUE
+										);
+									}
+									return TRUE;
+									case WM_CLOSE:
+									{
+										EndDialog(hDlg, 0);
+									}
+									return TRUE;
+								}
+								return FALSE;
+							}
+						};
+						MessageBoxW(
+							*this,
+							std::to_wstring(displayDialogueBox(db, *this)).c_str(),
+							L"return",
+							0
+						);
 					}
 					return 0;
 				}

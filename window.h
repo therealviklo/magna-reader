@@ -215,7 +215,7 @@ private:
 		catch (...)
 		{
 			lippincott();
-			throw;
+			std::terminate();
 		}
 	}
 public:

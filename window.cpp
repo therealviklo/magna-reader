@@ -70,7 +70,7 @@ LRESULT CALLBACK Window::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 		catch (...)
 		{
 			lippincott();
-			throw;
+			std::terminate();
 		}
 	}
 	return DefWindowProcW(hWnd, msg, wParam, lParam);
