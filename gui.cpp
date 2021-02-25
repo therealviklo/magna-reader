@@ -505,6 +505,14 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 				}
 			},
 			MenuItem::SubMenu{
+				L"&Reset",
+				Menu{
+					MenuItem::String{L"&Zoom and Position", MenuId::resetZoom},
+					MenuItem::String{L"Loaded &Images", MenuId::resetImages},
+					MenuItem::String{L"&Settings", MenuId::resetSettings}
+				}
+			},
+			MenuItem::SubMenu{
 				L"&Autoread",
 				Menu{
 					MenuItem::String{L"Start &Autoread", MenuId::startAutoRead},
@@ -525,9 +533,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 	const RECT rc = getSize();
 	onResize(rc.right, rc.bottom);
 
-	keepPagesMenu.sync(doNotKeepPages);
-	readingOrderMenu.sync(ass->easternReadingOrder);
-	fitModeMenu.sync(ass->fitMode);
+	syncMenus();
 
 	loadPics(files);
 }
@@ -653,7 +659,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			const short delta = GET_WHEEL_DELTA_WPARAM(wParam);
 			const auto keys = LOWORD(wParam);
-			if (((keys & MK_CONTROL) != 0) || ((keys & MK_SHIFT) != 0))
+			if ((keys & MK_CONTROL) != 0)
 			{
 				const RECT rc = getSize();
 				POINT mousePos{};
@@ -672,6 +678,14 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				);
 				centerOnImage();
 				slidingPosition.skipSlide();
+			}
+			else if ((keys & MK_SHIFT) != 0)
+			{
+				slidingPosition.slideTo(
+					slidingPosition.getX() - static_cast<float>(delta) / 1.3F,
+					slidingPosition.getY()
+				);
+				centerOnImage();
 			}
 			else
 			{
@@ -775,6 +789,31 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 					case MenuId::realSize:
 					{
 						fitModeMenu.set(FitMode::realSize, &CS::fitMode, ass);
+						calculateZoom();
+						InvalidateRect(*this, nullptr, FALSE);
+					}
+					return 0;
+
+					case MenuId::resetZoom:
+					{
+						userZoom = 1.0F;
+						slidingPosition.jumpTo(0.0F, 0.0F);
+						InvalidateRect(*this, nullptr, FALSE);
+					}
+					return 0;
+					case MenuId::resetImages:
+					{
+						loadPics({});
+						InvalidateRect(*this, nullptr, FALSE);
+					}
+					return 0;
+					case MenuId::resetSettings:
+					{
+						ass.reset();
+						doNotKeepPages = true;
+
+						syncMenus();
+
 						calculateZoom();
 						InvalidateRect(*this, nullptr, FALSE);
 					}

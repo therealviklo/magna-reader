@@ -105,4 +105,10 @@ public:
 		us.*m = v;
 		saveSettings(us, filename.c_str());
 	}
+
+	constexpr void reset() noexcept
+	{
+		us = decltype(us)();
+		saveSettings(us, filename.c_str());
+	}
 };

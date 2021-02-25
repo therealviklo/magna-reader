@@ -32,6 +32,10 @@ namespace MenuId
 		realSizeOrHeight,
 		height,
 		realSize,
+
+		resetZoom,
+		resetImages,
+		resetSettings,
 		
 		startAutoRead,
 		stopAutoRead,
@@ -137,8 +141,14 @@ private:
 	{
 		pic = num;
 		slidingPosition.jumpTo(0.0F, 0.0F);
-		userZoom = 1.0f;
 		calculateZoom();
+	}
+
+	void syncMenus() noexcept
+	{
+		keepPagesMenu.sync(doNotKeepPages);
+		readingOrderMenu.sync(ass->easternReadingOrder);
+		fitModeMenu.sync(ass->fitMode);
 	}
 
 	std::optional<std::vector<std::wstring>> openFileDialogue();
