@@ -111,8 +111,16 @@ void MainWindow::SlidingPosition::callback(MainWindow& wnd)
 				}
 				if (*wsp.autoReadPos > zoomedHeight)
 				{
-					wnd.nextPic();
-					wsp.startAutoReadAt(0.0F);
+					if (wnd.pic == wnd.pics.size() - 1)
+					{
+						wsp.autoReadPos.reset();
+						wsp.timer.stop();
+					}
+					else
+					{
+						wnd.nextPic();
+						wsp.startAutoReadAt(0.0F);
+					}
 				}
 				InvalidateRect(wnd, nullptr, FALSE);
 			}
