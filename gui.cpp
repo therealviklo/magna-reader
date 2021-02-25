@@ -459,17 +459,17 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 		L"Magna Reader",
 		Menu{
 			MenuItem::SubMenu{
-				L"File",
+				L"&File",
 				Menu{
-					MenuItem::String{L"Open Files...", MenuId::openFiles},
-					MenuItem::String{L"Open Folders...", MenuId::openFolder},
+					MenuItem::String{L"&Open Files...", MenuId::openFiles},
+					MenuItem::String{L"Open &Folders...", MenuId::openFolder},
 					MenuItem::Separator{},
 					MenuItem::SubMenu{
-						L"When Opening Pages",
+						L"When Opening &Pages",
 						Menu{
 							{
-								MenuItem::RadioButton{L"Keep Old Ones", false, MenuId::keepPages},
-								MenuItem::RadioButton{L"Close Old Ones", true, MenuId::closePages}
+								MenuItem::RadioButton{L"&Keep Old Ones", false, MenuId::keepPages},
+								MenuItem::RadioButton{L"&Close Old Ones", true, MenuId::closePages}
 							},
 							keepPagesMenu.handle
 						}
@@ -477,20 +477,20 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 				}
 			},
 			MenuItem::SubMenu{
-				L"Settings",
+				L"&Settings",
 				Menu{
 					MenuItem::SubMenu{
-						L"Reading Direction",
+						L"Reading &Direction",
 						Menu{
 							{
-								MenuItem::RadioButton{L"Left-to-Right", true, MenuId::ltr},
-								MenuItem::RadioButton{L"Right-to-Left", false, MenuId::rtl}
+								MenuItem::RadioButton{L"&Left-to-Right", true, MenuId::ltr},
+								MenuItem::RadioButton{L"&Right-to-Left", false, MenuId::rtl}
 							},
 							readingOrderMenu.handle
 						}
 					},
 					MenuItem::SubMenu{
-						L"Fit Mode",
+						L"&Fit Mode",
 						Menu{
 							{
 								MenuItem::RadioButton{L"Real Size or Width", false, MenuId::realSizeOrWidth},
@@ -505,11 +505,11 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 				}
 			},
 			MenuItem::SubMenu{
-				L"Autoread",
+				L"&Autoread",
 				Menu{
-					MenuItem::String{L"Start Autoread", MenuId::startAutoRead},
-					MenuItem::String{L"Stop Autoread", MenuId::stopAutoRead},
-					MenuItem::String{L"Set Speed...", MenuId::setAutoReadSpeed}
+					MenuItem::String{L"Start &Autoread", MenuId::startAutoRead},
+					MenuItem::String{L"&Stop Autoread", MenuId::stopAutoRead},
+					MenuItem::String{L"Set S&peed...", MenuId::setAutoReadSpeed}
 				}
 			}
 		}
@@ -847,6 +847,13 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 								}
 							},
 							[](HWND hDlg, UINT msg, WPARAM wParam, LPARAM /*lParam*/) -> INT_PTR {
+								struct SpeedDlgHotKey
+								{
+									enum SpeedDlgHotKey_t : int
+									{
+										esc
+									};
+								};
 								static UHandle<HFONT, &DeleteObject> font(CreateFontW(
 									-12,
 									0,
@@ -878,8 +885,46 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 										setFont(SpeedDlgId::label);
 										setFont(SpeedDlgId::entryBox);
 										setFont(SpeedDlgId::button);
+										RegisterHotKey(
+											hDlg,
+											SpeedDlgHotKey::esc,
+											0,
+											VK_ESCAPE
+										);
 									}
 									return TRUE;
+									case WM_DESTROY:
+									{
+										UnregisterHotKey(
+											hDlg,
+											SpeedDlgHotKey::esc
+										);
+									}
+									return TRUE;
+									case WM_KEYDOWN:
+									{
+										switch (wParam)
+										{
+											case VK_ESCAPE:
+											{
+												EndDialog(hDlg, 0);
+											}
+											return TRUE;
+										}
+									}
+									break;
+									case WM_HOTKEY:
+									{
+										switch (wParam)
+										{
+											case SpeedDlgHotKey::esc:
+											{
+												EndDialog(hDlg, 0);
+											}
+											return TRUE;
+										}
+									}
+									break;
 									case WM_COMMAND:
 									{
 										switch (LOWORD(wParam))
