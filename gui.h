@@ -8,7 +8,7 @@
 #include <sstream>
 #include "window.h"
 #include "d2d.h"
-#include "windowsx.h"
+// #include "windowsx.h"
 #include <shobjidl_core.h>
 #include "settings.h"
 #include "menuhelp.h"
