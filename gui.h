@@ -20,6 +20,7 @@ namespace MenuId
 	{
 		openFiles,
 		openFolder,
+		openSeries,
 
 		keepPages,
 		closePages,
@@ -77,6 +78,8 @@ private:
 	MenuRange<MenuId::ltr, MenuId::rtl, bool> readingOrderMenu;
 	MenuRange<MenuId::realSizeOrWidth, MenuId::realSize, FitMode> fitModeMenu;
 
+	std::vector<std::wstring> folders;
+	std::size_t folder;
 	std::vector<Bitmap> pics;
 	size_t pic;
 
@@ -152,7 +155,7 @@ private:
 	}
 
 	std::optional<std::vector<std::wstring>> openFileDialogue();
-	std::optional<std::vector<std::wstring>> openFolderDialogue();
+	std::optional<std::vector<std::wstring>> openFolderDialogue(bool multiple = true);
 	void loadPics(const std::vector<std::wstring>& files);
 	void loadFolders(const std::vector<std::wstring>& folders);
 

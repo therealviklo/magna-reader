@@ -253,7 +253,7 @@ std::optional<std::vector<std::wstring>> MainWindow::openFileDialogue()
 	return files;
 }
 
-std::optional<std::vector<std::wstring>> MainWindow::openFolderDialogue()
+std::optional<std::vector<std::wstring>> MainWindow::openFolderDialogue(bool multiple)
 {
 	HRESULT hr = 0;
 	
@@ -270,7 +270,10 @@ std::optional<std::vector<std::wstring>> MainWindow::openFolderDialogue()
 	if (FAILED(hr = fop->GetOptions(&flags)))
 		throw WinError(L"Failed to get folder dialogue options", hr);
 
-	if (FAILED(hr = fop->SetOptions(flags | FOS_FORCEFILESYSTEM | FOS_PICKFOLDERS | FOS_ALLOWMULTISELECT)))
+	flags |= FOS_FORCEFILESYSTEM | FOS_PICKFOLDERS;
+	if (multiple)
+		flags |= FOS_ALLOWMULTISELECT;
+	if (FAILED(hr = fop->SetOptions(flags)))
 		throw WinError(L"Failed to set folder dialogue options", hr);
 
 	if (FAILED(hr = fop->Show(*this)))
@@ -471,6 +474,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 				Menu{
 					MenuItem::String{L"&Open Files...", MenuId::openFiles},
 					MenuItem::String{L"Open &Folders...", MenuId::openFolder},
+					MenuItem::String{L"Open &Series Folder... (experimental)", MenuId::openSeries},
 					MenuItem::Separator{},
 					MenuItem::SubMenu{
 						L"When Opening &Pages",
@@ -531,6 +535,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 		}
 	),
 	pageWindow(*this),
+	folder(0),
 	pic(0),
 	ass(L"settings.cfg"),
 	doNotKeepPages(true),
@@ -562,20 +567,40 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 			{
 				case VK_LEFT:
 				{
-					if (ass->easternReadingOrder)
-						nextPic();
+					if (GetKeyState(VK_SHIFT) & 0b1000'0000)
+					{
+						if (folders.size() && folder)
+							folder--;
+						loadFolders({folders.at(folder)});
+						InvalidateRect(*this, nullptr, FALSE);
+					}
 					else
-						prevPic();
-					InvalidateRect(*this, nullptr, FALSE);
+					{
+						if (ass->easternReadingOrder)
+							nextPic();
+						else
+							prevPic();
+						InvalidateRect(*this, nullptr, FALSE);
+					}
 				}
 				return 0;
 				case VK_RIGHT:
 				{
-					if (ass->easternReadingOrder)
-						prevPic();
+					if (GetKeyState(VK_SHIFT) & 0b1000'0000)
+					{
+						if (folders.size())
+							folder = std::min(folder + 1, folders.size() - 1);
+						loadFolders({folders.at(folder)});
+						InvalidateRect(*this, nullptr, FALSE);
+					}
 					else
-						nextPic();
-					InvalidateRect(*this, nullptr, FALSE);
+					{
+						if (ass->easternReadingOrder)
+							prevPic();
+						else
+							nextPic();
+						InvalidateRect(*this, nullptr, FALSE);
+					}
 				}
 				return 0;
 				case VK_UP:
@@ -740,6 +765,26 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 						{
 							loadFolders(*folder);
 							InvalidateRect(*this, nullptr, FALSE);
+						}
+					}
+					return 0;
+					case MenuId::openSeries:
+					{
+						const auto folder = openFolderDialogue(false);
+						if (folder && folder->size() == 1)
+						{
+							this->folder = 0;
+							folders.clear();
+							for (const auto& i : std::filesystem::directory_iterator(folder->at(0)))
+							{
+								if (i.is_directory())
+									folders.push_back(i.path());
+							}
+							if (folders.size())
+							{
+								loadFolders({folders.at(this->folder)});
+								InvalidateRect(*this, nullptr, FALSE);
+							}
 						}
 					}
 					return 0;
