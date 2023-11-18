@@ -11,7 +11,7 @@ namespace
 	}
 }
 
-INT_PTR displayDialogueBox(const DialogueBox& db, HWND hWnd)
+INT_PTR displayDialogueBox(const DialogueBox& db, HWND hWnd, LPARAM initParam)
 {
 	auto alignSizeWord = [](size_t& i) -> void {
 		i = ((i + 1) >> 1) << 1;
@@ -111,7 +111,7 @@ INT_PTR displayDialogueBox(const DialogueBox& db, HWND hWnd)
 		(DLGTEMPLATE*)dbt.get(),
 		hWnd,
 		db.dlgProc,
-		0
+		initParam
 	);
 	if (DWORD errCode = GetLastError(); (res == 0 || res == -1) && errCode)
 		throw WinError(L"Failed to display dialogue box", errCode);

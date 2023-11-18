@@ -46,4 +46,4 @@ struct DialogueBox
 	DLGPROC dlgProc;
 };
 
-INT_PTR displayDialogueBox(const DialogueBox& db, HWND hWnd);
+INT_PTR displayDialogueBox(const DialogueBox& db, HWND hWnd, LPARAM initParam = 0);

@@ -893,7 +893,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 									L"OK"
 								}
 							},
-							[](HWND hDlg, UINT msg, WPARAM wParam, LPARAM /*lParam*/) -> INT_PTR {
+							[](HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) -> INT_PTR {
 								struct SpeedDlgHotKey
 								{
 									enum SpeedDlgHotKey_t : int
@@ -938,6 +938,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 											0,
 											VK_ESCAPE
 										);
+										SetWindowLongPtrW(hDlg, DWLP_USER, lParam);
 									}
 									return TRUE;
 									case WM_DESTROY:
@@ -991,8 +992,8 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 														float newSpeed = std::wcstof(buf, nullptr);
 														if (newSpeed > 0.0F && !std::isinf(newSpeed) && !std::isnan(newSpeed))
 														{
-															float* ret = new float(newSpeed);
-															EndDialog(hDlg, (INT_PTR)ret);
+															*(std::optional<float>*)GetWindowLongPtrW(hDlg, DWLP_USER) = newSpeed;
+															EndDialog(hDlg, 0);
 															return TRUE;
 														}
 													}
@@ -1014,7 +1015,8 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 							}
 						};
 
-						std::unique_ptr<float> ret((float*)displayDialogueBox(db, *this));
+						std::optional<float> ret;
+						displayDialogueBox(db, *this, (LPARAM)&ret);
 						if (ret)
 						{
 							ass.set(&CS::autoReadSpeed, *ret);
