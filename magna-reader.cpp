@@ -4,7 +4,7 @@
 #include "utils.h"
 #include "gui.h"
 #include "lippincott.h"
-#include "d2d.h"
+#include "comhandler.h"
 
 std::vector<std::wstring> getCmdLineArgs(const wchar_t* cmdLine)
 {
@@ -33,7 +33,10 @@ int WINAPI wWinMain(
 
 		const auto args = std::wstring(pCmdLine).empty() ? std::vector<std::wstring>{} : getCmdLineArgs(pCmdLine);
 		MainWindow mw(args);
-		while ((bool)mw) updateAllWindows();
+		while ((bool)mw)
+		{
+			updateAllWindows();
+		}
 	}
 	catch (...)
 	{

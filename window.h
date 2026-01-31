@@ -76,7 +76,7 @@ public:
 	template <class ParentWindowClass>
 	ParentWindowClass& getParent() const
 	{
-		return dynamic_cast<MainWindow&>(*reinterpret_cast<Window*>(GetWindowLongPtrW(GetParent(hWnd.get()), GWLP_USERDATA)));
+		return dynamic_cast<ParentWindowClass&>(*reinterpret_cast<Window*>(GetWindowLongPtrW(GetParent(hWnd.get()), GWLP_USERDATA)));
 	}
 
 	RECT getSize() const

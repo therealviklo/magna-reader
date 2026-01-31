@@ -1,87 +1,5 @@
 #include "gui.h"
 
-MainWindow::PageWindow::PageWindow(HWND parent) :
-	Window(
-		defWindowClass,
-		WS_CHILD,
-		0,
-		L"Page Window",
-		parent
-	),
-	rt(
-		*this,
-		getParent<MainWindow>().d2dfac
-	)
-{
-	DragAcceptFiles(*this, TRUE);
-}
-
-LRESULT MainWindow::PageWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	switch (msg)
-	{
- 		case WM_PAINT:
-		{
-			auto& mw = getParent<MainWindow>();
-			const RECT rc = getSize();
-
-			rt.beginDraw();
-			rt.clear();
-
-			if (!mw.pics.empty())
-			{
-				const auto& bmp = mw.pics.at(mw.pic);
-				const struct {
-					float w;
-					float h;
-				} zoomedSize{
-					static_cast<float>(bmp.getWidth()) * mw.zoom * mw.userZoom,
-					static_cast<float>(bmp.getHeight()) * mw.zoom * mw.userZoom
-				};
-				rt.drawBitmap(
-					bmp,
-					(static_cast<float>(rc.right) - zoomedSize.w) / 2.0F - mw.slidingPosition.getCurrX(),
-					-mw.slidingPosition.getCurrY(),
-					zoomedSize.w,
-					zoomedSize.h
-				);
-			}
-
-			if (rt.endDraw(mw.d2dfac))
-				ValidateRect(*this, nullptr);
-		}
-		return 0;
-		case WM_SIZE:
-		{
-			rt.resize(LOWORD(lParam), HIWORD(lParam));
-			auto& mw = getParent<MainWindow>();
-			mw.calculateZoom();
-		}
-		return 0;
-		case WM_DROPFILES:
-		{
-			auto& mw = getParent<MainWindow>();
-			const UHandle<HDROP, DragFinish> drop(reinterpret_cast<HDROP>(wParam));
-			const unsigned count = DragQueryFileW(drop.get(), 0xFFFFFFFF, nullptr, 0);
-			std::vector<std::wstring> filenames;
-			filenames.reserve(count);
-			for (unsigned i = 0; i < count; i++)
-			{
-				const unsigned charCount = DragQueryFileW(drop.get(), i, nullptr, 0);
-				if (charCount == 0) throw WinError(L"Failed to get dropped file name size");
-				std::vector<wchar_t> buffer(charCount + 1);
-				if (DragQueryFileW(drop.get(), i, &buffer[0], buffer.size()) == 0)
-					throw WinError(L"Failed to get dropped file name");
-				filenames.emplace_back(buffer.data());
-			}
-			mw.loadPics(filenames);
-			InvalidateRect(mw, nullptr, FALSE);
-		}
-		return 0;
-	}
-	return DefWindowProcW(*this, msg, wParam, lParam);
-}
-
 void MainWindow::SlidingPosition::callback(MainWindow& wnd)
 {
 	auto& wsp = wnd.slidingPosition;
@@ -97,16 +15,16 @@ void MainWindow::SlidingPosition::callback(MainWindow& wnd)
 			else
 			{
 				*wsp.autoReadPos += wnd.ass->autoReadSpeed;
-				const auto size = wnd.pageWindow.getSize();
+				const auto size = wnd.getSize();
 				const auto& bmp = wnd.pics.at(wnd.pic);
 				const float zoomedHeight = float(bmp.getHeight()) * wnd.zoom * wnd.userZoom;
 				if (zoomedHeight > float(size.bottom))
 				{
 					wsp.y = std::clamp<float>(
 						*wsp.autoReadPos,
-						float(size.bottom) / 2.0F,
-						zoomedHeight - float(size.bottom) / 2.0F
-					) - float(size.bottom) / 2.0F;
+						float(size.bottom) * 0.5F,
+						zoomedHeight - float(size.bottom) * 0.5F
+					) - float(size.bottom) * 0.5F;
 					wsp.destY = wsp.y;
 				}
 				if (*wsp.autoReadPos > zoomedHeight)
@@ -167,11 +85,11 @@ void MainWindow::SlidingPosition::startAutoReadAt(float pos)
 
 void MainWindow::autoRead()
 {
-	const auto size = pageWindow.getSize();
+	const auto size = getSize();
 	slidingPosition.startAutoReadAt(
 		slidingPosition.getY() == 0.0F ?
 		0.0F :
-		slidingPosition.getY() + float(size.bottom) / 2.0F
+		slidingPosition.getY() + float(size.bottom) * 0.5F
 	);
 }
 
@@ -324,17 +242,18 @@ void MainWindow::loadPics(const std::vector<std::wstring>& files)
 	{
 		try
 		{
-			pics.emplace_back(i.c_str(), wicfac, pageWindow.rt);
+			// pics.emplace_back(i.c_str(), wicfac, pageWindow.rt);
+			pics.push_back(dv2.createTexture(i.c_str()));
 		}
-		catch (const WinError& e)
+		catch (const DV2::Exception& e)
 		{
 			pics.clear();
 			setPic(0);
 			std::wostringstream ss;
 			ss << L"Unable to open file \""
 			   << i
-			   << L"\" (Error code: 0x"
-			   << std::hex << e.hr
+			   << L"\" (Error: "
+			   << e.what()
 			   << L")";
 			MessageBoxW(*this, ss.str().c_str(), L"Nonfatal error", MB_ICONERROR);
 			return;
@@ -384,14 +303,14 @@ void MainWindow::centerOnImage()
 {
 	if (!pics.empty())
 	{
-		const RECT pwSize = pageWindow.getSize();
+		const RECT size = getSize();
 		const auto picWidth = static_cast<float>(pics[pic].getWidth()) * zoom * userZoom;
 		const auto picHeight = static_cast<float>(pics[pic].getHeight()) * zoom * userZoom;
 
-		const float minX = static_cast<float>(pwSize.right) / 2.0F - picWidth / 2.0F;
-		const float maxX = picWidth / 2.0F - static_cast<float>(pwSize.right) / 2.0F;
+		const float minX = static_cast<float>(size.right) * 0.5F - picWidth * 0.5F;
+		const float maxX = picWidth * 0.5F - static_cast<float>(size.right) * 0.5F;
 
-		const float maxY = picHeight - static_cast<float>(pwSize.bottom);
+		const float maxY = picHeight - static_cast<float>(size.bottom);
 
 		float newX = 0.0F;
 		float newY = 0.0F;
@@ -426,25 +345,25 @@ void MainWindow::calculateZoom()
 		{
 			case FitMode::realSizeOrWidth:
 			{
-				const RECT size = pageWindow.getSize();
+				const RECT size = getSize();
 				zoom = std::min<float>(size.right / (float)pics[pic].getWidth(), 1.0F);
 			}
 			break;
 			case FitMode::width:
 			{
-				const RECT size = pageWindow.getSize();
+				const RECT size = getSize();
 				zoom = size.right / (float)pics[pic].getWidth();
 			}
 			break;
 			case FitMode::realSizeOrHeight:
 			{
-				const RECT size = pageWindow.getSize();
+				const RECT size = getSize();
 				zoom = std::min<float>(size.bottom / (float)pics[pic].getHeight(), 1.0F);
 			}
 			break;
 			case FitMode::height:
 			{
-				const RECT size = pageWindow.getSize();
+				const RECT size = getSize();
 				zoom = size.bottom / (float)pics[pic].getHeight();
 			}
 			break;
@@ -455,11 +374,6 @@ void MainWindow::calculateZoom()
 			break;
 		}
 	}
-}
-
-void MainWindow::onResize(int w, int h)
-{
-	MoveWindow(pageWindow, 0, 0, w, h, TRUE);
 }
 
 MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppcoreguidelines-pro-type-member-init)
@@ -534,7 +448,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 			}
 		}
 	),
-	pageWindow(*this),
+	dv2(*this),
 	folder(0),
 	pic(0),
 	ass(L"settings.cfg"),
@@ -543,21 +457,75 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 	userZoom(1.0F),
 	zoom(1.0F)
 {
-	const RECT rc = getSize();
-	onResize(rc.right, rc.bottom);
-
 	syncMenus();
 
 	loadPics(files);
+}
+
+void MainWindow::draw()
+{
+	const RECT rc = getSize();
+
+	dv2.clear();
+
+	if (!pics.empty())
+	{
+		const auto& bmp = pics.at(pic);
+		const struct {
+			float w;
+			float h;
+		} zoomedSize{
+			static_cast<float>(bmp.getWidth()) * zoom * userZoom,
+			static_cast<float>(bmp.getHeight()) * zoom * userZoom
+		};
+		dv2.draw(
+			bmp,
+			dv2.clientToDVX(rc.right * 0.5F - slidingPosition.getCurrX()),
+			dv2.clientToDVY(zoomedSize.h * 0.5F - slidingPosition.getCurrY()),
+			zoomedSize.w,
+			zoomedSize.h
+		);
+	}
+
+	dv2.presentNoSync();
 }
 
 LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
 	{
+ 		case WM_PAINT:
+		{
+			PAINTSTRUCT ps{};
+			BeginPaint(*this, &ps);
+			draw();
+			EndPaint(*this, &ps);
+		}
+		return 0;
 		case WM_SIZE:
 		{
-			onResize(LOWORD(lParam), HIWORD(lParam));
+			dv2.resize();
+			auto& mw = getParent<MainWindow>();
+			mw.calculateZoom();
+			InvalidateRect(*this, nullptr, FALSE);
+		}
+		return 0;
+		case WM_DROPFILES:
+		{
+			const UHandle<HDROP, DragFinish> drop(reinterpret_cast<HDROP>(wParam));
+			const unsigned count = DragQueryFileW(drop.get(), 0xFFFFFFFF, nullptr, 0);
+			std::vector<std::wstring> filenames;
+			filenames.reserve(count);
+			for (unsigned i = 0; i < count; i++)
+			{
+				const unsigned charCount = DragQueryFileW(drop.get(), i, nullptr, 0);
+				if (charCount == 0) throw WinError(L"Failed to get dropped file name size");
+				std::vector<wchar_t> buffer(charCount + 1);
+				if (DragQueryFileW(drop.get(), i, &buffer[0], buffer.size()) == 0)
+					throw WinError(L"Failed to get dropped file name");
+				filenames.emplace_back(buffer.data());
+			}
+			loadPics(filenames);
 			InvalidateRect(*this, nullptr, FALSE);
 		}
 		return 0;
@@ -625,7 +593,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				return 0;
 				case VK_PRIOR:
 				{
-					const RECT size = pageWindow.getSize();
+					const RECT size = getSize();
 					slidingPosition.slideTo(
 						slidingPosition.getX(),
 						slidingPosition.getY() - static_cast<float>(size.bottom) * 0.95F
@@ -636,7 +604,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				return 0;
 				case VK_NEXT:
 				{
-					const RECT size = pageWindow.getSize();
+					const RECT size = getSize();
 					slidingPosition.slideTo(
 						slidingPosition.getX(),
 						slidingPosition.getY() + static_cast<float>(size.bottom) * 0.95F
@@ -657,7 +625,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				return 0;
 				case VK_END:
 				{
-					const RECT size = pageWindow.getSize();
+					const RECT size = getSize();
 					const auto picHeight = static_cast<float>(pics[pic].getHeight()) * zoom * userZoom;
 					const auto maxY = picHeight - static_cast<float>(size.bottom);
 					
@@ -707,7 +675,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				userZoom *= zoomFactor;
 				slidingPosition.jumpTo(
 					(slidingPosition.getX() + mousePos.x) * zoomFactor - mousePos.x,
-					(slidingPosition.getY() + mousePos.y + rc.bottom / 2.0F) * zoomFactor - mousePos.y - rc.bottom / 2.0F
+					(slidingPosition.getY() + mousePos.y + rc.bottom * 0.5F) * zoomFactor - mousePos.y - rc.bottom * 0.5F
 				);
 				centerOnImage();
 				slidingPosition.skipSlide();

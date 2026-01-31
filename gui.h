@@ -7,7 +7,7 @@
 #include <filesystem>
 #include <sstream>
 #include "window.h"
-#include "d2d.h"
+#include "dv2.h"
 // #include "windowsx.h"
 #include <shobjidl_core.h>
 #include "settings.h"
@@ -61,26 +61,15 @@ private:
 	using CASS = AutoSaveSettings<CurrSettingsVer>;
 	using CS = Settings<CurrSettingsVer>;
 
-	D2DFactory d2dfac;
-	WICFactory wicfac;
+	DV2 dv2;
 
-	class PageWindow : public Window
-	{
-		friend MainWindow;
-	private:
-		RenderTarget rt;
-	public:
-		PageWindow(HWND parent);
-		
-		LRESULT wndProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
-	} pageWindow;
 	MenuRange<MenuId::keepPages, MenuId::closePages, bool> keepPagesMenu;
 	MenuRange<MenuId::ltr, MenuId::rtl, bool> readingOrderMenu;
 	MenuRange<MenuId::realSizeOrWidth, MenuId::realSize, FitMode> fitModeMenu;
 
 	std::vector<std::wstring> folders;
 	std::size_t folder;
-	std::vector<Bitmap> pics;
+	std::vector<Texture> pics;
 	size_t pic;
 
 	CASS ass;
@@ -161,7 +150,6 @@ private:
 
 	void centerOnImage();
 	void calculateZoom();
-	void onResize(int w, int h);
 public:
 	MainWindow(const std::vector<std::wstring>& files);
 
@@ -179,6 +167,8 @@ public:
 			setPic(pic - num);
 		}
 	}
-	
+
+	void draw();
+
 	LRESULT wndProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
 };
