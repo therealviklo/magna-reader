@@ -71,6 +71,7 @@ private:
 	std::size_t folder;
 	std::vector<Texture> pics;
 	size_t pic;
+	std::wstring seriesFolder;
 
 	CASS ass;
 	bool doNotKeepPages;
@@ -147,6 +148,7 @@ private:
 	std::optional<std::vector<std::wstring>> openFolderDialogue(bool multiple = true);
 	void loadPics(const std::vector<std::wstring>& files);
 	void loadFolders(const std::vector<std::wstring>& folders);
+	void loadSeries(std::wstring seriesFoler);
 
 	void centerOnImage();
 	void calculateZoom();

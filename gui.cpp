@@ -1,4 +1,8 @@
 #include "gui.h"
+#include "seriestracker.h"
+#include "programlocation.h"
+
+const std::filesystem::path seriesTrackerFilename = L"series.json";
 
 void MainWindow::SlidingPosition::callback(MainWindow& wnd)
 {
@@ -299,6 +303,38 @@ void MainWindow::loadFolders(const std::vector<std::wstring>& folders)
 	loadPics(imgs);
 }
 
+void MainWindow::loadSeries(std::wstring seriesFolder)
+{
+	try
+	{
+		this->seriesFolder = seriesFolder;
+		folder = getFolderNumber(getProgramDirectory() / seriesTrackerFilename, seriesFolder);
+		folders.clear();
+		for (const auto& i : std::filesystem::directory_iterator(seriesFolder))
+		{
+			if (i.is_directory())
+				folders.push_back(i.path());
+		}
+		if (folders.size())
+		{
+			loadFolders({folders.at(folder)});
+		}
+	}
+	catch (const std::exception& e)
+	{
+		pics.clear();
+		setPic(0);
+		folders.clear();
+		folder = 0;
+		this->seriesFolder = L"";
+		std::wostringstream ss;
+		ss << L"Unable to open series (Error: "
+			<< e.what()
+			<< L")";
+		MessageBoxW(*this, ss.str().c_str(), L"Nonfatal error", MB_ICONERROR);
+	}
+}
+
 void MainWindow::centerOnImage()
 {
 	if (!pics.empty())
@@ -388,7 +424,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 				Menu{
 					MenuItem::String{L"&Open Files...", MenuId::openFiles},
 					MenuItem::String{L"Open &Folders...", MenuId::openFolder},
-					MenuItem::String{L"Open &Series Folder... (experimental)", MenuId::openSeries},
+					MenuItem::String{L"Open &Series Folder...", MenuId::openSeries},
 					MenuItem::Separator{},
 					MenuItem::SubMenu{
 						L"When Opening &Pages",
@@ -492,7 +528,10 @@ void MainWindow::nextFolder()
 	if (folders.size())
 		folder = std::min(folder + 1, folders.size() - 1);
 	if (old_folder != folder)
+	{
 		loadFolders({folders.at(folder)});
+		saveFolderNumber(getProgramDirectory() / seriesTrackerFilename, seriesFolder, folder);
+	}
 }
 
 void MainWindow::prevFolder()
@@ -501,7 +540,10 @@ void MainWindow::prevFolder()
 	if (folders.size() && folder)
 		folder--;
 	if (old_folder != folder)
+	{
 		loadFolders({folders.at(folder)});
+		saveFolderNumber(getProgramDirectory() / seriesTrackerFilename, seriesFolder, folder);
+	}
 }
 
 void MainWindow::draw()
@@ -759,6 +801,9 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 						const auto files = openFileDialogue();
 						if (files)
 						{
+							seriesFolder = L"";
+							folders.clear();
+							folder = 0;
 							loadPics(*files);
 							InvalidateRect(*this, nullptr, FALSE);
 						}
@@ -769,6 +814,9 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 						const auto folder = openFolderDialogue();
 						if (folder)
 						{
+							seriesFolder = L"";
+							folders.clear();
+							this->folder = 0;
 							loadFolders(*folder);
 							InvalidateRect(*this, nullptr, FALSE);
 						}
@@ -779,18 +827,8 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 						const auto folder = openFolderDialogue(false);
 						if (folder && folder->size() == 1)
 						{
-							this->folder = 0;
-							folders.clear();
-							for (const auto& i : std::filesystem::directory_iterator(folder->at(0)))
-							{
-								if (i.is_directory())
-									folders.push_back(i.path());
-							}
-							if (folders.size())
-							{
-								loadFolders({folders.at(this->folder)});
-								InvalidateRect(*this, nullptr, FALSE);
-							}
+							loadSeries(folder->at(0));
+							InvalidateRect(*this, nullptr, FALSE);
 						}
 					}
 					return 0;

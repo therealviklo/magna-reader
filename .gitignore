@@ -1,6 +1,7 @@
 .vscode
 test
 settings.cfg
+series.json
 
 *.exe
 *.o
