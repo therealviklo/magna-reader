@@ -153,20 +153,10 @@ private:
 public:
 	MainWindow(const std::vector<std::wstring>& files);
 
-	constexpr void nextPic(size_t num = 1) noexcept
-	{
-		if (pic < pics.size() - 1)
-		{
-			setPic(pic + num);
-		}
-	}
-	constexpr void prevPic(size_t num = 1) noexcept
-	{
-		if (pic > 0)
-		{
-			setPic(pic - num);
-		}
-	}
+	void nextPic(size_t num = 1);
+	void prevPic(size_t num = 1);
+	void nextFolder();
+	void prevFolder();
 
 	void draw();
 

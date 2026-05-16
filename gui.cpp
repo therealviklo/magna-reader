@@ -462,6 +462,48 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 	loadPics(files);
 }
 
+void MainWindow::nextPic(size_t num)
+{
+	if (pic < pics.size() - 1)
+	{
+		setPic(pic + num);
+	}
+	else
+	{
+		nextFolder();
+	}
+}
+
+void MainWindow::prevPic(size_t num)
+{
+	if (pic > 0)
+	{
+		setPic(pic - num);
+	}
+	else
+	{
+		prevFolder();
+	}
+}
+
+void MainWindow::nextFolder()
+{
+	const auto old_folder = folder;
+	if (folders.size())
+		folder = std::min(folder + 1, folders.size() - 1);
+	if (old_folder != folder)
+		loadFolders({folders.at(folder)});
+}
+
+void MainWindow::prevFolder()
+{
+	const auto old_folder = folder;
+	if (folders.size() && folder)
+		folder--;
+	if (old_folder != folder)
+		loadFolders({folders.at(folder)});
+}
+
 void MainWindow::draw()
 {
 	const RECT rc = getSize();
@@ -537,9 +579,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				{
 					if (GetKeyState(VK_SHIFT) & 0b1000'0000)
 					{
-						if (folders.size() && folder)
-							folder--;
-						loadFolders({folders.at(folder)});
+						prevFolder();
 						InvalidateRect(*this, nullptr, FALSE);
 					}
 					else
@@ -556,9 +596,7 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 				{
 					if (GetKeyState(VK_SHIFT) & 0b1000'0000)
 					{
-						if (folders.size())
-							folder = std::min(folder + 1, folders.size() - 1);
-						loadFolders({folders.at(folder)});
+						nextFolder();
 						InvalidateRect(*this, nullptr, FALSE);
 					}
 					else
