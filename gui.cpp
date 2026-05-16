@@ -498,11 +498,11 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 	loadPics(files);
 }
 
-void MainWindow::nextPic(size_t num)
+void MainWindow::nextPic()
 {
 	if (pic < pics.size() - 1)
 	{
-		setPic(pic + num);
+		setPic(pic + 1);
 	}
 	else
 	{
@@ -510,15 +510,17 @@ void MainWindow::nextPic(size_t num)
 	}
 }
 
-void MainWindow::prevPic(size_t num)
+void MainWindow::prevPic()
 {
 	if (pic > 0)
 	{
-		setPic(pic - num);
+		setPic(pic - 1);
 	}
 	else
 	{
 		prevFolder();
+		if (pics.size())
+			setPic(pics.size() - 1);
 	}
 }
 

@@ -155,8 +155,8 @@ private:
 public:
 	MainWindow(const std::vector<std::wstring>& files);
 
-	void nextPic(size_t num = 1);
-	void prevPic(size_t num = 1);
+	void nextPic();
+	void prevPic();
 	void nextFolder();
 	void prevFolder();
 
