@@ -552,6 +552,9 @@ void MainWindow::prevFolder()
 
 void MainWindow::draw()
 {
+	if (!dv2.hasSwapChain())
+		return;
+
 	const RECT rc = getSize();
 
 	dv2.clear();
@@ -592,7 +595,17 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 		case WM_SIZE:
 		{
-			dv2.resize();
+			try
+			{
+				dv2.resize();
+			}
+			// Om något går fel när den resizear, visa inte något meddelande
+			// till användaren för då hoppar fönstret fram, och ett av de vanligaste
+			// felen är att fönstret inte syns längre. draw() kollar om det finns
+			// en swapchain innan den försöker rita och det verkar som att när
+			// fönstret kommer på skärmen igen så sänds WM_SIZE igen så att
+			// en ny swapchain skapas.
+			catch (const DV2::Exception&) {}
 			auto& mw = getParent<MainWindow>();
 			mw.calculateZoom();
 			InvalidateRect(*this, nullptr, FALSE);

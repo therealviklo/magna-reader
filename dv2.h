@@ -63,6 +63,11 @@ public:
 	public:
 		NoFullscreenChange() : Exception("Unable to change fullscreen state") {}
 	};
+	class NoSwapChain : public Exception
+	{
+		public:
+		NoSwapChain() : Exception("No swapchain was initialised") {}
+	};
 private:
 	HWND hWnd;
 
@@ -171,30 +176,47 @@ public:
 	// Ingen synkning, visar direkt.
 	void presentNoSync();
 
-	float getWidth() const noexcept
+	float getWidth() const
 	{
+		if (!swapChain)
+			throw NoSwapChain();
 		return swapChain->width;
 	}
-	float getHeight() const noexcept
+	float getHeight() const
 	{
+		if (!swapChain)
+			throw NoSwapChain();
 		return swapChain->height;
 	}
 
-	float clientToDVX(float x) const noexcept
+	float clientToDVX(float x) const
 	{
+		if (!swapChain)
+			throw NoSwapChain();
 		return (x / swapChain->width - 0.5) * getWidth();
 	}
-	float DVToClientX(float x) const noexcept
+	float DVToClientX(float x) const
 	{
+		if (!swapChain)
+			throw NoSwapChain();
 		return (x / getWidth() + 0.5) * swapChain->width;
 	}
-	float clientToDVY(float y) const noexcept
+	float clientToDVY(float y) const
 	{
+		if (!swapChain)
+			throw NoSwapChain();
 		return -(y / swapChain->height - 0.5) * getHeight();
 	}
-	float DVToClientY(float y) const noexcept
+	float DVToClientY(float y) const
 	{
+		if (!swapChain)
+			throw NoSwapChain();
 		return -(y / getHeight() + 0.5) * swapChain->height;
+	}
+
+	constexpr bool hasSwapChain() const noexcept
+	{
+		return swapChain.has_value();
 	}
 
 	static void changeScreenResolution(int width, int height);

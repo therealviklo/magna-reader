@@ -810,12 +810,18 @@ Texture DV2::createTexture(const wchar_t* filename)
 
 void DV2::clear()
 {
+	if (!swapChain)
+		throw NoSwapChain();
+
 	const float clrArr[] = {0.0f, 0.0f, 0.0f, 1.0f};
 	context->ClearRenderTargetView(swapChain->target.Get(), clrArr);
 }
 
 void DV2::clear(Colour clr)
 {
+	if (!swapChain)
+		throw NoSwapChain();
+
 	const float clrArr[] = {clr.r, clr.g, clr.b, clr.a};
 	context->ClearRenderTargetView(swapChain->target.Get(), clrArr);
 }
@@ -833,6 +839,9 @@ void DV2::draw(
 	float angle,
 	Colour clrShift)
 {
+	if (!swapChain)
+		throw NoSwapChain();
+
 	context->PSSetShaderResources(0, 1, texture.texView.GetAddressOf());
 
 	D3D11_MAPPED_SUBRESOURCE msrPs;
