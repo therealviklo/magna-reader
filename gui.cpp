@@ -319,6 +319,7 @@ void MainWindow::loadSeries(std::wstring seriesFolder)
 		{
 			loadFolders({folders.at(folder)});
 		}
+		saveMostRecentSeries(getProgramDirectory() / seriesTrackerFilename, seriesFolder);
 	}
 	catch (const std::exception& e)
 	{
@@ -425,6 +426,7 @@ MainWindow::MainWindow(const std::vector<std::wstring>& files) : // NOLINT(cppco
 					MenuItem::String{L"&Open Files...", MenuId::openFiles},
 					MenuItem::String{L"Open &Folders...", MenuId::openFolder},
 					MenuItem::String{L"Open &Series Folder...", MenuId::openSeries},
+					MenuItem::String{L"Open Most &Recent Series Folder", MenuId::openRecentSeries},
 					MenuItem::Separator{},
 					MenuItem::SubMenu{
 						L"When Opening &Pages",
@@ -831,6 +833,20 @@ LRESULT MainWindow::wndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 						{
 							loadSeries(folder->at(0));
 							InvalidateRect(*this, nullptr, FALSE);
+						}
+					}
+					return 0;
+					case MenuId::openRecentSeries:
+					{
+						const auto folder = getMostRecentSeries(getProgramDirectory() / seriesTrackerFilename);
+						if (folder)
+						{
+							loadSeries(*folder);
+							InvalidateRect(*this, nullptr, FALSE);
+						}
+						else
+						{
+							MessageBoxW(*this, L"No recent series to open", L"Error", MB_ICONWARNING);
 						}
 					}
 					return 0;

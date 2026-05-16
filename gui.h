@@ -21,6 +21,7 @@ namespace MenuId
 		openFiles,
 		openFolder,
 		openSeries,
+		openRecentSeries,
 
 		keepPages,
 		closePages,
